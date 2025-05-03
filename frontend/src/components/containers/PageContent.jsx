@@ -1,8 +1,8 @@
 import React from 'react'
 
-const PageContent = ({ children }) => {
+const PageContent = ({ children, className }) => {
   return (
-    <div className="p-8 w-4/5">{children}</div>
+    <div className={`p-8 w-4/5 ${className}`}>{children}</div>
   )
 }
 
