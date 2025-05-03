@@ -27,7 +27,7 @@ export const menuItems = [
   },
   {
     pathname: "/dashboard/members",
-    text: "สมาชิกในกลุ่ม",
+    text: "สมาชิกกลุ่ม",
     icon: <PeopleAltRoundedIcon />,
   },
 ];

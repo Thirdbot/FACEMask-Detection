@@ -6,6 +6,7 @@ import Members from "./components/pages/Members.jsx";
 import Manual from "./components/pages/Manual.jsx";
 import ProjectDescription from "./components/pages/ProjectDescription.jsx";
 import FaceMaskDetection from "./components/pages/FaceMaskDetection.jsx";
+import NotFound from "./components/pages/NotFound.jsx";
 import "@fontsource/ibm-plex-sans-thai";
 import "./style/tailwind.css";
 import "./style/globals.css";
@@ -24,6 +25,7 @@ root.render(
         <Route path="face-mask-detection" element={<FaceMaskDetection />} />
         <Route path="members" element={<Members />} />
       </Route>
+      <Route path="/*" element={<NotFound/>}/>
     </Routes>
   </BrowserRouter>
 );
