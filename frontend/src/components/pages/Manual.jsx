@@ -1,13 +1,14 @@
 import AppContainer from "../containers/AppContainer";
 import Sidebar from "../ui/Sidebar";
 import PageContent from "../containers/PageContent";
+import Title from "../ui/Title";
 
 const Manual = () => {
   return (
     <AppContainer>
       <Sidebar />
       <PageContent>
-        <h1>หน้าสอนการใช้งาน</h1>
+        <Title text="สอนการใช้งาน"/>
       </PageContent>
     </AppContainer>
   );

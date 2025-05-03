@@ -31,3 +31,26 @@ export const menuItems = [
     icon: <PeopleAltRoundedIcon />,
   },
 ];
+
+export const membersData = [
+  {
+    name: "นาย ปัณณวัฒน์ นิ่งเจริญ",
+    studentId: 6630250231,
+  },
+  {
+    name: "นาย พันธุ์ธัช สุวรรณวัฒนะ",
+    studentId: 6630250281,
+  },
+  {
+    name: "นาย ปุณณภพ มีฤทธิ์",
+    studentId: 6630250291,
+  },
+  {
+    name: "นาย วรินทร์ สายปัญญา",
+    studentId: 6630250435,
+  },
+  {
+    name: "นางสาว อัมพุชินิ บุญรักษ์",
+    studentId: 6630250532,
+  },
+];
