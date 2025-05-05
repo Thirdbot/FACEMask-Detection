@@ -15,16 +15,16 @@ const NotFound = () => {
     <AppContainer>
       <div className="w-full h-screen p-8 flex flex-col items-center justify-center">
         <Typography variant="h5" align="center" color="error">
-          ไม่พบหน้าเพจที่คุณต้องการ!
+          <p>ไม่พบหน้าเพจที่คุณต้องการ!</p>
         </Typography>
-        <div className="my-2"></div>
+        <div className="my-3"></div>
         <Button
-          variant="contained"
+          variant="outlined"
           className="mt-12"
           color="error"
           onClick={handleBackToHome}
         >
-          กลับไปยังหน้าหลัก
+          <span>กลับไปยังหน้าหลัก</span>
         </Button>
       </div>
     </AppContainer>

@@ -25,11 +25,11 @@ const Sidebar = () => {
 
   return (
     <aside
-      className={`w-1/5 bg-gray-900 text-black flex flex-col items-start justify-stretch px-6 py-10 transition-all delay-75 ease-in-out ${isExpanded ? "" : "w-[7%]"}`}
+      className={`bg-gray-900 text-black flex flex-col items-start justify-stretch px-6 py-10 transition-all delay-75 ease-in-out ${isExpanded ? " w-[27%]" : "w-[7%]"}`}
     >
       <SidebarHeader>
         <div
-          className={`flex items-center justify-start w-4/5 ${isExpanded ? "cursor-pointer" : "w-full justify-center"}`}
+          className={`flex items-center justify-start ${isExpanded ? "cursor-pointer w-4/5" : "w-full justify-center"}`}
           onClick={handleToggle}
         >
           <img

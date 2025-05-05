@@ -10,6 +10,12 @@ const Home = () => {
       <Sidebar />
       <PageContent>
         <Title text="หน้าหลัก" />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Excepturi
+          voluptatibus incidunt corrupti illum harum vero. Exercitationem
+          voluptatibus voluptates est corporis nulla consequuntur laboriosam
+          ducimus ut, accusamus, saepe cupiditate, error harum?
+        </p>
       </PageContent>
     </AppContainer>
   );

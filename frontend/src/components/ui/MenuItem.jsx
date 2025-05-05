@@ -9,6 +9,7 @@ const MenuItem = ({ text, icon, pathname }) => {
   const location = useLocation();
 
   useEffect(() => {
+    console.log(location.pathname)
     setIsExpanded(isTrue(localStorage.getItem("isExpanded")));
   }, []);
 
