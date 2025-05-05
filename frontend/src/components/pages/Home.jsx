@@ -2,13 +2,14 @@ import React from "react";
 import AppContainer from "../containers/AppContainer";
 import Sidebar from "../ui/Sidebar";
 import PageContent from "../containers/PageContent";
+import Title from "../ui/Title";
 
 const Home = () => {
   return (
     <AppContainer>
       <Sidebar />
       <PageContent>
-        <h3>หน้าหลัก</h3>
+        <Title text="หน้าหลัก" />
       </PageContent>
     </AppContainer>
   );

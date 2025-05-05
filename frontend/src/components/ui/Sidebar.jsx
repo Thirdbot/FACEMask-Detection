@@ -15,7 +15,7 @@ const Sidebar = () => {
           alt="react-logo"
           className="size-14 rounded-full"
         />
-        <h3 className="text-slate-50 text-2xl ">Face Mask AI</h3>
+        <h3 className="text-slate-50 text-2xl ms-6">Face Mask AI</h3>
       </SidebarHeader>
       <HorizontalLine />
       <Menu className="mt-6 w-full">
