@@ -3,6 +3,7 @@ import PeopleAltRoundedIcon from "@mui/icons-material/PeopleAltRounded";
 import DescriptionRoundedIcon from "@mui/icons-material/DescriptionRounded";
 import InfoRoundedIcon from "@mui/icons-material/InfoRounded";
 import MasksRoundedIcon from "@mui/icons-material/MasksRounded";
+import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 
 export const menuItems = [
   {
@@ -29,6 +30,11 @@ export const menuItems = [
     pathname: "/dashboard/members",
     text: "สมาชิกกลุ่ม",
     icon: <PeopleAltRoundedIcon />,
+  },
+  {
+    pathname: "/dashboard/settings",
+    text: "ตั้งค่า",
+    icon: <SettingsRoundedIcon />,
   },
 ];
 

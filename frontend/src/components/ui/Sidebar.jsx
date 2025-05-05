@@ -3,6 +3,8 @@ import uuid from "react-uuid";
 import TableRowsRoundedIcon from "@mui/icons-material/TableRowsRounded";
 import { NavLink } from "react-router";
 import SidebarHeader from "../containers/SidebarHeader";
+import SidebarBody from "../containers/SidebarBody";
+import SidebarFooter from "../containers/SidebarFooter";
 import Menu from "../containers/Menu";
 import MenuItem from "./MenuItem";
 import HorizontalLine from "./HorizontalLine";
@@ -25,7 +27,7 @@ const Sidebar = () => {
 
   return (
     <aside
-      className={`bg-gray-900 text-black flex flex-col items-start justify-stretch px-6 py-10 transition-all delay-75 ease-in-out ${isExpanded ? " w-[27%]" : "w-[7%]"}`}
+      className={`bg-gray-900 text-black flex flex-col items-start justify-between px-6 py-10 transition-all delay-75 ease-in-out ${isExpanded ? " w-[27%]" : "w-[7%]"}`}
     >
       <SidebarHeader>
         <div
@@ -50,18 +52,24 @@ const Sidebar = () => {
           <TableRowsRoundedIcon className="text-slate-50 translate-x-8" />
         </div>
       </SidebarHeader>
-      <HorizontalLine />
-      <Menu className="mt-6 w-full">
-        {menuItems.map(({ text, icon, pathname }) => (
-          <NavLink to={pathname} key={uuid()}>
-            <MenuItem
-              text={text}
-              icon={icon}
-              pathname={pathname}
-            />
-          </NavLink>
-        ))}
-      </Menu>
+      <SidebarBody>
+        <HorizontalLine />
+        <Menu className="mt-6 w-full">
+          {menuItems.map(({ text, icon, pathname }) => (
+            <NavLink to={pathname} key={uuid()}>
+              <MenuItem text={text} icon={icon} pathname={pathname} />
+            </NavLink>
+          ))}
+        </Menu>
+        <HorizontalLine />
+      </SidebarBody>
+      <SidebarFooter>
+        <div
+          className={`text-gray-400 mt-6 text-center text-sm tracking-wide overflow-hidden ${isExpanded ? "visible" : "invisible"}`}
+        >
+          &copy; {new Date().getFullYear()} Copyright: Face Mask AI
+        </div>
+      </SidebarFooter>
     </aside>
   );
 };

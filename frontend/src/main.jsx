@@ -6,6 +6,7 @@ import Members from "./components/pages/Members.jsx";
 import Manual from "./components/pages/Manual.jsx";
 import ProjectDescription from "./components/pages/ProjectDescription.jsx";
 import FaceMaskDetection from "./components/pages/FaceMaskDetection.jsx";
+import Settings from "./components/pages/Settings.jsx";
 import NotFound from "./components/pages/NotFound.jsx";
 import "@fontsource/ibm-plex-sans-thai";
 import "./style/tailwind.css";
@@ -17,15 +18,17 @@ const root = createRoot(rootElement);
 root.render(
   <BrowserRouter>
     <Routes>
-      <Route index element={<App />} />
+      <Route path="/" element={<App />} />
       <Route path="dashboard">
         <Route path="home" element={<Home />} />
         <Route path="description" element={<ProjectDescription />} />
         <Route path="manual" element={<Manual />} />
         <Route path="face-mask-detection" element={<FaceMaskDetection />} />
         <Route path="members" element={<Members />} />
+        <Route path="settings" element={<Settings />} />
+        <Route index element={<NotFound />} />
       </Route>
-      <Route path="/*" element={<NotFound/>}/>
+      <Route path="/*" element={<NotFound />} />
     </Routes>
   </BrowserRouter>
 );
