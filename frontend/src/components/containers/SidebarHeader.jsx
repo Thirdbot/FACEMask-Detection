@@ -1,6 +1,6 @@
 const SidebarHeader = ({ children }) => {
   return (
-    <div className="w-full flex items-center justify-start">{children}</div>
+    <div className="w-full flex items-center justify-between">{children}</div>
   );
 };
 
