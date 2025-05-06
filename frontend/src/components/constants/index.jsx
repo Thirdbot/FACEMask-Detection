@@ -1,3 +1,4 @@
+import Badge from "@mui/material/Badge";
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import PeopleAltRoundedIcon from "@mui/icons-material/PeopleAltRounded";
 import DescriptionRoundedIcon from "@mui/icons-material/DescriptionRounded";
@@ -34,7 +35,11 @@ export const menuItems = [
   {
     pathname: "/dashboard/settings",
     text: "ตั้งค่า",
-    icon: <SettingsRoundedIcon />,
+    icon: (
+      <Badge color="info" badgeContent={3}>
+        <SettingsRoundedIcon />
+      </Badge>
+    ),
   },
 ];
 

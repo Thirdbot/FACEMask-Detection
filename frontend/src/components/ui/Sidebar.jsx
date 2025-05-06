@@ -19,6 +19,7 @@ const Sidebar = () => {
       ? isTrue(localStorage.getItem("isExpanded"))
       : true
   );
+  const [year, setYear] = useState(new Date().getFullYear());
 
   const handleToggle = useCallback((e) => {
     setIsExpanded((prev) => {
@@ -38,7 +39,7 @@ const Sidebar = () => {
         >
           <img
             src="/assets/icons/logo.png"
-            alt="main-logo"
+            alt="ku-logo"
             className={`size-14 rounded-full ${isExpanded ? "" : "m-auto cursor-pointer"}`}
           />
           <h3
@@ -68,7 +69,7 @@ const Sidebar = () => {
       <SidebarFooter>
         {isExpanded ? (
           <div className="w-full text-gray-400 mt-6 text-center text-sm tracking-wide overflow-hidden">
-            &copy; {new Date().getFullYear()} Copyright: KU FaceMask
+            &copy; {year} Copyright: KU FaceMask
           </div>
         ) : (
           <Tooltip title="ขยาย" placement="right" arrow onClick={handleToggle}>
