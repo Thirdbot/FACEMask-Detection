@@ -1,6 +1,8 @@
 import { useState, useCallback } from "react";
 import uuid from "react-uuid";
 import TableRowsRoundedIcon from "@mui/icons-material/TableRowsRounded";
+import ArrowForwardIosRoundedIcon from "@mui/icons-material/ArrowForwardIosRounded";
+import { Tooltip } from "@mui/material";
 import { NavLink } from "react-router";
 import SidebarHeader from "../containers/SidebarHeader";
 import SidebarBody from "../containers/SidebarBody";
@@ -42,7 +44,7 @@ const Sidebar = () => {
           <h3
             className={`text-slate-50 text-xl ms-4 ${isExpanded ? "" : "hidden"}`}
           >
-            Face Mask AI
+            KU FaceMask
           </h3>
         </div>
         <div
@@ -64,11 +66,17 @@ const Sidebar = () => {
         <HorizontalLine />
       </SidebarBody>
       <SidebarFooter>
-        <div
-          className={`text-gray-400 mt-6 text-center text-sm tracking-wide overflow-hidden ${isExpanded ? "visible" : "invisible"}`}
-        >
-          &copy; {new Date().getFullYear()} Copyright: Face Mask AI
-        </div>
+        {isExpanded ? (
+          <div className="w-full text-gray-400 mt-6 text-center text-sm tracking-wide overflow-hidden">
+            &copy; {new Date().getFullYear()} Copyright: KU FaceMask
+          </div>
+        ) : (
+          <Tooltip title="ขยาย" placement="right" arrow onClick={handleToggle}>
+            <div className="w-full h-12 mt-3 grid place-items-center transition delay-75 ease-in-out rounded-lg text-gray-400 hover:text-slate-50 hover:bg-gray-300/10 cursor-pointer">
+              <ArrowForwardIosRoundedIcon />
+            </div>
+          </Tooltip>
+        )}
       </SidebarFooter>
     </aside>
   );
