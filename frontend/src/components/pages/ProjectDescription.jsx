@@ -9,12 +9,14 @@ const ProjectDescription = () => {
       <Sidebar />
       <PageContent>
         <Title text="รายละเอียดโปรเจค" />
-        <p>
-          Lorem ipsum dolor sit amet consectetur adipisicing elit. Dolorum ab
-          mollitia reiciendis sequi numquam distinctio, veritatis modi dolorem
-          ipsum sed? Optio asperiores quia fugit odio perferendis culpa rerum
-          pariatur dolor?
-        </p>
+        <div className="w-full overflow-hidden">
+          <p className="leading-8 tracking-wide">
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. Dolorum ab
+            mollitia reiciendis sequi numquam distinctio, veritatis modi dolorem
+            ipsum sed? Optio asperiores quia fugit odio perferendis culpa rerum
+            pariatur dolor?
+          </p>          
+        </div>
       </PageContent>
     </AppContainer>
   );

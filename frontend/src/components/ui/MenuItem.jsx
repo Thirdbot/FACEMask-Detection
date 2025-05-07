@@ -9,23 +9,37 @@ const MenuItem = ({ text, icon, pathname }) => {
   const location = useLocation();
 
   useEffect(() => {
-    console.log(location.pathname)
     setIsExpanded(isTrue(localStorage.getItem("isExpanded")));
   }, []);
 
   useEffect(() => {
     setIsActive(location.pathname === pathname);
+
+    if (location.pathname === "/" && pathname === "/dashboard/home") {
+      setIsActive(true);
+    }
   }, [pathname]);
 
   return (
-    <Tooltip title={`ไปยังหน้า ${text}`} placement="right" arrow>
-      <li
-        className={`w-full h-12 text-gray-400 my-6 flex items-center cursor-pointer transition delay-75 ease-in-out rounded-lg ${isActive ? "text-slate-50" : "hover:text-slate-50 hover:bg-gray-300/10"} ${isExpanded ? "" : "justify-center"}`}
-      >
-        <span className={`${isExpanded ? "ms-2" : ""}`}>{icon}</span>
-        {isExpanded ? <p className="ms-3 text-lg">{text}</p> : <p></p>}
-      </li>
-    </Tooltip>
+    <>
+      {isActive ? (
+        <li
+          className={`w-full h-12 text-gray-400 my-6 flex items-center cursor-pointer transition delay-75 ease-in-out rounded-lg ${isActive ? "text-slate-50" : "hover:text-slate-50 hover:bg-gray-300/10"} ${isExpanded ? "" : "justify-center"} select-none`}
+        >
+          <span className={`${isExpanded ? "ms-2" : ""}`}>{icon}</span>
+          {isExpanded ? <p className="ms-3 text-lg">{text}</p> : <></>}
+        </li>
+      ) : (
+        <Tooltip title={<p>{`ไปยังหน้า ${text}`}</p>} placement="right" arrow>
+          <li
+            className={`w-full h-12 text-gray-400 my-6 flex items-center cursor-pointer transition delay-75 ease-in-out rounded-lg ${isActive ? "text-slate-50" : "hover:text-slate-50 hover:bg-gray-300/10"} ${isExpanded ? "" : "justify-center"} select-none`}
+          >
+            <span className={`${isExpanded ? "ms-2" : ""}`}>{icon}</span>
+            {isExpanded ? <p className="ms-3 text-lg">{text}</p> : <></>}
+          </li>
+        </Tooltip>
+      )}
+    </>
   );
 };
 

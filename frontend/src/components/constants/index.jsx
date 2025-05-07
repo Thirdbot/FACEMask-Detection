@@ -1,8 +1,10 @@
+import Badge from "@mui/material/Badge";
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import PeopleAltRoundedIcon from "@mui/icons-material/PeopleAltRounded";
 import DescriptionRoundedIcon from "@mui/icons-material/DescriptionRounded";
 import InfoRoundedIcon from "@mui/icons-material/InfoRounded";
 import MasksRoundedIcon from "@mui/icons-material/MasksRounded";
+import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 
 export const menuItems = [
   {
@@ -30,27 +32,41 @@ export const menuItems = [
     text: "สมาชิกกลุ่ม",
     icon: <PeopleAltRoundedIcon />,
   },
+  {
+    pathname: "/dashboard/settings",
+    text: "ตั้งค่า",
+    icon: (
+      <Badge color="info" badgeContent={1}>
+        <SettingsRoundedIcon />
+      </Badge>
+    ),
+  },
 ];
 
 export const membersData = [
   {
     name: "นาย ปัณณวัฒน์ นิ่งเจริญ",
     studentId: 6630250231,
+    responsibility: null
   },
   {
     name: "นาย พันธุ์ธัช สุวรรณวัฒนะ",
     studentId: 6630250281,
+    responsibility: "จัดการและทำความสะอาดข้อมูล Dataset"
   },
   {
     name: "นาย ปุณณภพ มีฤทธิ์",
     studentId: 6630250291,
+    responsibility: "สร้าง, ฝึกสน และ ทดสอบ AI Model"
   },
   {
     name: "นาย วรินทร์ สายปัญญา",
     studentId: 6630250435,
+    responsibility: "Frontend และ UX/UI Design"
   },
   {
     name: "นางสาว อัมพุชินิ บุญรักษ์",
     studentId: 6630250532,
+    responsibility: null
   },
 ];
