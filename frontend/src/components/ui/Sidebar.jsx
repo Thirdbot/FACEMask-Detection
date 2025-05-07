@@ -34,13 +34,13 @@ const Sidebar = () => {
     >
       <SidebarHeader>
         <div
-          className={`flex items-center justify-start ${isExpanded ? "cursor-pointer w-4/5" : "w-full justify-center"}`}
-          onClick={handleToggle}
+          className={`flex items-center justify-start ${isExpanded ? "w-4/5" : "w-full justify-center"}`}
         >
           <img
             src="/assets/icons/logo.png"
             alt="ku-logo"
             className={`size-14 rounded-full ${isExpanded ? "" : "m-auto cursor-pointer"}`}
+            onClick={handleToggle}
           />
           <h3
             className={`text-slate-50 text-xl ms-4 ${isExpanded ? "" : "hidden"}`}
@@ -72,7 +72,12 @@ const Sidebar = () => {
             &copy; {year} Copyright: KU FaceMask
           </div>
         ) : (
-          <Tooltip title="ขยาย" placement="right" arrow onClick={handleToggle}>
+          <Tooltip
+            title={<p>ขยาย</p>}
+            placement="right"
+            arrow
+            onClick={handleToggle}
+          >
             <div className="w-full h-12 mt-3 grid place-items-center transition delay-75 ease-in-out rounded-lg text-gray-400 hover:text-slate-50 hover:bg-gray-300/10 cursor-pointer">
               <ArrowForwardIosRoundedIcon />
             </div>

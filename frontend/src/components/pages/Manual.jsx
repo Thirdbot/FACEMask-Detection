@@ -8,7 +8,7 @@ const Manual = () => {
     <AppContainer>
       <Sidebar />
       <PageContent>
-        <Title text="สอนการใช้งาน"/>
+        <Title text="วิธีการใช้งาน"/>
         <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Culpa eum nemo veritatis in quos corporis vitae a, quidem obcaecati, aliquid sit nihil. Assumenda quia sed sequi fugiat alias incidunt illo.</p>
       </PageContent>
     </AppContainer>

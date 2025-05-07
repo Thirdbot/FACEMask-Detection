@@ -57,7 +57,7 @@ export const membersData = [
   {
     name: "นาย ปุณณภพ มีฤทธิ์",
     studentId: 6630250291,
-    responsibility: "สร้าง และ ฝึกสน AI Model"
+    responsibility: "สร้าง, ฝึกสน และ ทดสอบ AI Model"
   },
   {
     name: "นาย วรินทร์ สายปัญญา",

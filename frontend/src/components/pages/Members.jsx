@@ -12,13 +12,34 @@ const Members = () => {
       <Sidebar />
       <PageContent>
         <Title text="รายชื่อสมาชิกในกลุ่ม" />
-        <div className="w-full overflow-hidden">
+        <div className="w-full overflow-hidden flex items-center justify-evenly flex-wrap">
           <List>
-            {membersData.map(({ name, studentId, responsibility }, index) => (
+            <ListItem>
+              <ListItemText>
+                <p className="text-center text-lg underline">ชื่อสมาชิก</p>
+              </ListItemText>
+            </ListItem>
+            {membersData.map(({ name, studentId }, index) => (
               <ListItem key={uuid()}>
                 <ListItemText>
                   <p className="text-start">
-                    {index + 1}.) {name} รหัสนิสิต {studentId} รับผิดชอบหน้าที่ {responsibility}
+                    {index + 1}.) {name} รหัสนิสิต {studentId}
+                  </p>
+                </ListItemText>
+              </ListItem>
+            ))}
+          </List>
+          <List>
+            <ListItem>
+              <ListItemText>
+                <p className="text-center text-lg underline">บทบาทหน้าที่ๆรับผิดชอบ</p>
+              </ListItemText>
+            </ListItem>
+            {membersData.map(({ responsibility }) => (
+              <ListItem key={uuid()}>
+                <ListItemText>
+                  <p className="text-start">
+                    รับผิดชอบ {!!responsibility ? responsibility : "..."}
                   </p>
                 </ListItemText>
               </ListItem>

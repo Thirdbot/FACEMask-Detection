@@ -1,4 +1,5 @@
 import { NavLink } from "react-router";
+import { Tooltip } from "@mui/material";
 import AppContainer from "../containers/AppContainer";
 import Sidebar from "../ui/Sidebar";
 import PageContent from "../containers/PageContent";
@@ -33,12 +34,14 @@ const Home = () => {
           จะทำการประมวลผลข้อมูลใบหน้าผู้ใช้งานนั้นว่าทำการใส่แมสหรือไม่ได้ใส่แมส
           เว็บไซต์มีหลักการพื้นฐานที่เข้าใจง่ายและไม่ซับซ้อน
           ทั้งนี้สามารถเข้าไปตรวจสอบรายะเอียดโปรเจคเพิ่มเติมได้ที่
+          <Tooltip title={<p>คลิกเพื่อไปที่หน้ารายละเอียดโปรเจค</p>} placement="bottom" arrow>
           <NavLink
             to="/dashboard/description"
             className="ms-2 underline cursor-pointer text-green-500"
           >
             หน้ารายละเอียดโปรเจค
           </NavLink>
+          </Tooltip>
         </p>
       </PageContent>
     </AppContainer>
