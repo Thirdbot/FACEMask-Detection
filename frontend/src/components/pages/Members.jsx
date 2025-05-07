@@ -1,4 +1,4 @@
-import { List, ListItem, ListItemText, Box } from "@mui/material";
+import { List, ListItem, ListItemText } from "@mui/material";
 import uuid from "react-uuid";
 import AppContainer from "../containers/AppContainer";
 import Sidebar from "../ui/Sidebar";
@@ -12,19 +12,19 @@ const Members = () => {
       <Sidebar />
       <PageContent>
         <Title text="รายชื่อสมาชิกในกลุ่ม" />
-        <Box>
+        <div className="w-full overflow-hidden">
           <List>
-            {membersData.map(({ name, studentId }, index) => (
+            {membersData.map(({ name, studentId, responsibility }, index) => (
               <ListItem key={uuid()}>
                 <ListItemText>
-                  <p className="text-center">
-                    {index + 1}.) {name} รหัสนิสิต {studentId}
+                  <p className="text-start">
+                    {index + 1}.) {name} รหัสนิสิต {studentId} รับผิดชอบหน้าที่ {responsibility}
                   </p>
                 </ListItemText>
               </ListItem>
             ))}
           </List>
-        </Box>
+        </div>
       </PageContent>
     </AppContainer>
   );
