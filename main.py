@@ -49,15 +49,17 @@ print(f"Using:{device}")
 print(tf.__version__)
 print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
 
-datasetName = "andrewmvd/face-mask-detection"
-# ดาวโหลด์ตัว datasets จาก kaggle เก็บไว้ใน path ที่ระบุ
+from pathlib import Path
 
+Home_dir = Path(__file__).parent.absolute()
+
+dataset_path = Home_dir / "cleaned_dataset"
 
 class Main:
     def __init__(self):
-        self.dataset_loader = DatasetLoader(datasetName)
-        self.path = self.dataset_loader.load_data()
-        print(f"path ของไฟล์ dataset อยู่ที่: {self.path}")
+        self.dataset_loader = DatasetLoader(dataset_path)
+        
+        
         
         
 
