@@ -18,6 +18,7 @@ const FaceMaskDetection = () => {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isAlertShown, setIsAlertShown] = useState(false);
   const videoRef = useRef();
+  const pcRef = useRef();
 
   const constraints = {
     video: true,
@@ -35,8 +36,32 @@ const FaceMaskDetection = () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       videoRef.current.srcObject = stream;
+
+      const pc = new RTCPeerConnection();
+      pcRef.current = pc;
+
+      stream.getTracks().forEach((track) => pc.addTrack(track, stream))
+
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription();
+
+      const response = await fetch("http://localhost:8080/offer", {
+        method: "POST",
+        body: JSON.stringify({
+          sdp: pc.localDescription.sdp,
+          type: pc.localDescription.type
+        }),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+
+      const answer = await response.json();
+      await pc.setRemoteDescription(new RTCSessionDescription(answer));
+
+      console.log(answer);
     } catch (err) {
-      if (err instanceof DOMException) {
+      if (err instanceof Error) {
         console.error(err.message);
       }
     }
@@ -51,6 +76,10 @@ const FaceMaskDetection = () => {
 
       setIsCameraOpen(false);
       handleAlertClose();
+    }
+
+    if(pcRef.current){
+      pcRef.current.close();
     }
   }, []);
 
