@@ -36,7 +36,7 @@ export const menuItems = [
     pathname: "/dashboard/settings",
     text: "ตั้งค่า",
     icon: (
-      <Badge color="info" badgeContent={1}>
+      <Badge color="info" badgeContent={2}>
         <SettingsRoundedIcon />
       </Badge>
     ),
@@ -47,26 +47,33 @@ export const membersData = [
   {
     name: "นาย ปัณณวัฒน์ นิ่งเจริญ",
     studentId: 6630250231,
-    responsibility: null
+    responsibility: null,
   },
   {
     name: "นาย พันธุ์ธัช สุวรรณวัฒนะ",
     studentId: 6630250281,
-    responsibility: "จัดการและทำความสะอาดข้อมูล Dataset"
+    responsibility: "จัดการและทำความสะอาดข้อมูล Dataset",
   },
   {
     name: "นาย ปุณณภพ มีฤทธิ์",
     studentId: 6630250291,
-    responsibility: "สร้าง, ฝึกสน และ ทดสอบ AI Model"
+    responsibility: "สร้าง, ฝึกสน และ ทดสอบ AI Model",
   },
   {
     name: "นาย วรินทร์ สายปัญญา",
     studentId: 6630250435,
-    responsibility: "Frontend และ UX/UI Design"
+    responsibility: "Frontend และ UX/UI Design",
   },
   {
     name: "นางสาว อัมพุชินิ บุญรักษ์",
     studentId: 6630250532,
-    responsibility: null
+    responsibility: null,
   },
+];
+
+export const modelNames = [
+  "Decision Tree",
+  "Deep Learning",
+  "K-Nearest Neighbors",
+  "Random Forest",
 ];
