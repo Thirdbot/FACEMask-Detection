@@ -32,8 +32,14 @@ const FaceMaskDetection = () => {
 
   const handleOpenCamera = useCallback(async () => {
     setIsCameraOpen(true);
-    const stream = await navigator.mediaDevices.getUserMedia(constraints);
-    videoRef.current.srcObject = stream;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      videoRef.current.srcObject = stream;
+    } catch (err) {
+      if (err instanceof DOMException) {
+        console.error(err.message);
+      }
+    }
   }, []);
 
   const handleCloseCamera = useCallback(() => {
