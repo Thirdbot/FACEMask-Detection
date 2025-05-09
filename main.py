@@ -1,8 +1,9 @@
 import os
 import cv2
 import numpy as np
-from tensorflow.keras.models import Sequential, load_model
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
+from tensorflow.keras.models import Sequential, load_model, Model
+from tensorflow.keras.applications import MobileNetV2
+from tensorflow.keras.layers import Dense, Dropout, GlobalAveragePooling2D
 from tensorflow.keras.utils import to_categorical
 from sklearn.model_selection import train_test_split
 
@@ -42,13 +43,13 @@ labels = to_categorical(labels, num_classes=2)  # One-hot encode labels
 # Split dataset
 X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size=0.2, random_state=42)
 
-# Define CNN model
+# Define CNN model using transfer learning
+base_model = MobileNetV2(weights="imagenet", include_top=False, input_shape=(224, 224, 3))
+base_model.trainable = False  # Freeze base model layers
+
 model = Sequential([
-    Conv2D(32, (3, 3), activation='relu', input_shape=(224, 224, 3)),  # Updated input shape
-    MaxPooling2D((2, 2)),
-    Conv2D(64, (3, 3), activation='relu'),
-    MaxPooling2D((2, 2)),
-    Flatten(),
+    base_model,
+    GlobalAveragePooling2D(),
     Dense(128, activation='relu'),
     Dropout(0.5),
     Dense(2, activation='softmax')  # Output layer for 2 classes
@@ -67,44 +68,61 @@ print("Model trained and saved as mask_detector_model.h5")
 model = load_model("mask_detector_model.h5")
 print("Model loaded successfully.")
 
-def preprocess_image(image_path):
-    """
-    Preprocess a single image for prediction.
-    """
-    try:
-        img = cv2.imread(image_path)
-        img = cv2.resize(img, (224, 224))  # Resize to match model input
-        img = img / 255.0  # Normalize pixel values
-        return np.expand_dims(img, axis=0)  # Add batch dimension
-    except Exception as e:
-        print(f"Error processing image {image_path}: {e}")
-        return None
+# Integrate face detection
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
-def predict_image(image_path):
+def detect_faces(image):
     """
-    Predict whether the image contains a person with or without a mask.
+    Detect faces in an image using OpenCV's Haar cascade.
     """
-    processed_img = preprocess_image(image_path)
-    if processed_img is not None:
-        prediction = model.predict(processed_img)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+    return faces
+
+def preprocess_faces(image, faces):
+    """
+    Preprocess each detected face for prediction.
+    """
+    face_images = []
+    for (x, y, w, h) in faces:
+        face = image[y:y+h, x:x+w]
+        face = cv2.resize(face, (224, 224))
+        face = face / 255.0
+        face_images.append(np.expand_dims(face, axis=0))
+    return face_images
+
+def predict_faces(image_path):
+    """
+    Detect and predict mask status for multiple faces in an image.
+    """
+    image = cv2.imread(image_path)
+    faces = detect_faces(image)
+    if len(faces) == 0:
+        print("No faces detected.")
+        return
+
+    face_images = preprocess_faces(image, faces)
+    for i, face_img in enumerate(face_images):
+        prediction = model.predict(face_img)
         class_idx = np.argmax(prediction)
         class_label = categories[class_idx]
         confidence = prediction[0][class_idx]
-        print(f"Prediction: {class_label} (Confidence: {confidence:.2f})")
-    else:
-        print("Failed to process the image.")
+        print(f"Face {i+1}: {class_label} (Confidence: {confidence:.2f})")
 
-# Test preprocess_image function
-if __name__ == "__main__":
-    test_image_path = "pictureface/jojo1.jpg"  # Replace with a valid image path
-    processed_img = preprocess_image(test_image_path)
-    if processed_img is not None:
-        print("Image preprocessing successful.")
-    else:
-        print("Image preprocessing failed.")
+        # Draw bounding box and label on the image
+        x, y, w, h = faces[i]
+        color = (0, 255, 0) if class_label == "with_mask" else (0, 0, 255)
+        cv2.rectangle(image, (x, y), (x+w, y+h), color, 2)
+        cv2.putText(image, f"{class_label} ({confidence:.2f})", (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+
+    # Display the image with predictions
+    cv2.imshow("Mask Detection", image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
 # Test on real-world images
-test_images = ["pictureface/jojo1.jpg", "pictureface/jojo2.jpg"]  # Updated with your image paths
-for img_path in test_images:
-    print(f"Testing image: {img_path}")
-    predict_image(img_path)
+if __name__ == "__main__":
+    test_images = ["pictureface/jojo1.jpg", "pictureface/jojo2.jpg"]  # Replace with your image paths
+    for img_path in test_images:
+        print(f"Testing image: {img_path}")
+        predict_faces(img_path)
