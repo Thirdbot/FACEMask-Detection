@@ -6,19 +6,31 @@ from aiortc import RTCPeerConnection, RTCSessionDescription
 from aiortc.contrib.media import MediaStreamTrack
 from av import VideoFrame
 import aiohttp_cors
+from tensorflow.keras.models import load_model
 
+# โหลดโมเดล
+model = load_model("./models/mask_detector_model.h5")
 pcs = set()
+lock = asyncio.Lock()  # ป้องกัน predict ซ้อนกัน
 
-# ตัวอย่างโมเดล dummy
+# ตรวจแมส
 def detect_mask(frame: np.ndarray) -> str:
-    h, w, _ = frame.shape
-    center_pixel = frame[h//2, w//2]
-    if np.mean(center_pixel) < 100:
-        return "Wearing Mask"
-    else:
-        return "No Mask"
+    try:
+        img = cv2.resize(frame, (224, 224))
+        img = img / 255.0
+        img = np.expand_dims(img, axis=0)
+        prediction = model.predict(img, verbose=0)
 
-# ประมวลผล video track
+        if prediction.shape[-1] == 1:
+            return "Wearing Mask" if prediction[0][0] > 0.5 else "No Mask"
+        else:
+            label = np.argmax(prediction)
+            return "Wearing Mask" if label == 1 else "No Mask"
+    except Exception as e:
+        print("Prediction error:", e)
+        return "Error"
+
+# Custom video track
 class VideoTransformTrack(MediaStreamTrack):
     kind = "video"
 
@@ -30,20 +42,22 @@ class VideoTransformTrack(MediaStreamTrack):
         frame = await self.track.recv()
         img = frame.to_ndarray(format="bgr24")
 
-        result = detect_mask(img)
+        async with lock:
+            result = detect_mask(img)
 
-        cv2.putText(img, result, (30, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        # วาดผล
+        cv2.putText(img, result, (30, 30), cv2.FONT_HERSHEY_SIMPLEX,
+                    1, (0, 255, 0), 2)
 
         new_frame = VideoFrame.from_ndarray(img, format="bgr24")
         new_frame.pts = frame.pts
         new_frame.time_base = frame.time_base
         return new_frame
 
-# รับ WebRTC offer
+# WebRTC offer
 async def offer(request):
     params = await request.json()
     offer = RTCSessionDescription(sdp=params["sdp"], type=params["type"])
-
     pc = RTCPeerConnection()
     pcs.add(pc)
 
@@ -62,20 +76,17 @@ async def offer(request):
         "type": pc.localDescription.type
     })
 
-# ปิด connection ตอนปิด server
+# ปิด connection
 async def on_shutdown(app):
     await asyncio.gather(*[pc.close() for pc in pcs])
     pcs.clear()
 
-# สร้าง server
+# สร้าง web server
 app = web.Application()
 app.on_shutdown.append(on_shutdown)
-
-# ตั้งค่า route
 offer_route = app.router.add_post("/offer", offer)
 
-# ตั้งค่า CORS ให้ครอบคลุมทุก origin (*)
-import aiohttp_cors
+# CORS
 cors = aiohttp_cors.setup(app, defaults={
     "*": aiohttp_cors.ResourceOptions(
         allow_credentials=True,
@@ -85,5 +96,5 @@ cors = aiohttp_cors.setup(app, defaults={
 })
 cors.add(offer_route)
 
-# เริ่มรัน
+# Run server
 web.run_app(app, port=8080)

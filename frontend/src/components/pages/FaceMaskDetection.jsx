@@ -35,31 +35,35 @@ const FaceMaskDetection = () => {
     setIsCameraOpen(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      videoRef.current.srcObject = stream;
-
       const pc = new RTCPeerConnection();
       pcRef.current = pc;
 
-      stream.getTracks().forEach((track) => pc.addTrack(track, stream))
+      stream.getTracks().forEach((track) => pc.addTrack(track, stream));
 
       const offer = await pc.createOffer();
-      await pc.setLocalDescription();
+      await pc.setLocalDescription(offer);
 
       const response = await fetch("http://localhost:8080/offer", {
         method: "POST",
         body: JSON.stringify({
           sdp: pc.localDescription.sdp,
-          type: pc.localDescription.type
+          type: pc.localDescription.type,
         }),
         headers: {
-          "Content-Type": "application/json"
-        }
+          "Content-Type": "application/json",
+        },
       });
 
       const answer = await response.json();
       await pc.setRemoteDescription(new RTCSessionDescription(answer));
 
-      console.log(answer);
+      pc.ontrack = (event) => {
+        console.log("Remote track received", event.track.kind);
+        if (event.track.kind === "video") {
+          const inboundStream = new MediaStream([event.track]);
+          videoRef.current.srcObject = inboundStream;
+        }
+      };
     } catch (err) {
       if (err instanceof Error) {
         console.error(err.message);
@@ -68,17 +72,17 @@ const FaceMaskDetection = () => {
   }, []);
 
   const handleCloseCamera = useCallback(() => {
+    setIsCameraOpen(false);
+    handleAlertClose();
+
     if (videoRef.current.srcObject) {
       const stream = videoRef.current.srcObject;
       const tracks = stream.getTracks();
       tracks.forEach((track) => track.stop());
       videoRef.current.srcObject = null;
-
-      setIsCameraOpen(false);
-      handleAlertClose();
     }
 
-    if(pcRef.current){
+    if (pcRef.current) {
       pcRef.current.close();
     }
   }, []);

@@ -1,74 +1,128 @@
-# นำเข้า modules ของ libraries
 import os
-import re
+import cv2
+import numpy as np
+from tensorflow.keras.models import Sequential, load_model, Model
+from tensorflow.keras.applications import MobileNetV2
+from tensorflow.keras.layers import Dense, Dropout, GlobalAveragePooling2D
+from tensorflow.keras.utils import to_categorical
+from sklearn.model_selection import train_test_split
 
-# import matplotlib.pyplot as plt
-# import matplotlib.patches as patches
-# import cv2
-# from matplotlib.pyplot import figure
-# from PIL import Image
-# import xml.etree.ElementTree as ET
-# from sklearn.preprocessing import LabelEncoder,LabelBinarizer
-# from sklearn.model_selection import train_test_split
+# Load dataset
+data_dir = "cleaned_dataset\data"
+categories = ["with_mask", "without_mask"]
+data = []
+labels = []
 
-# from sklearn.ensemble import RandomForestClassifier
+# Verify dataset directories exist
+if not os.path.exists(data_dir):
+    raise FileNotFoundError(f"The dataset directory '{data_dir}' does not exist. Please ensure the dataset is placed in the correct location.")
 
-# from sklearn.tree import DecisionTreeClassifier
-import tensorflow as tf
+for category in categories:
+    path = os.path.join(data_dir, category)
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"The category directory '{path}' does not exist. Please ensure the dataset contains the required subdirectories: {categories}.")
 
+for category in categories:
+    path = os.path.join(data_dir, category)
+    label = categories.index(category)
+    for img_name in os.listdir(path):
+        img_path = os.path.join(path, img_name)
+        try:
+            img = cv2.imread(img_path)
+            img = cv2.resize(img, (224, 224))  
+            data.append(img)
+            labels.append(label)
+        except Exception as e:
+            print(f"Error loading image {img_path}: {e}")
 
-from datasetLoader import DatasetLoader
+# Preprocess data
+data = np.array(data) / 255.0  # Normalize pixel values
+labels = np.array(labels)
+labels = to_categorical(labels, num_classes=2)  # One-hot encode labels
 
-from pandas import DataFrame
+# Split dataset
+X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size=0.2, random_state=42)
 
-import multiprocessing
-from functools import partial
-from multiprocessing import Manager
-from tqdm import tqdm
-import pandas as pd
-import random
+# Define CNN model using transfer learning
+base_model = MobileNetV2(weights="imagenet", include_top=False, input_shape=(224, 224, 3))
+base_model.trainable = False  # Freeze base model layers
 
-#image mismatch handler
-import shutil
-import torch
-# import torchvision.transforms as transforms
-# import torchvision.models as models
-# from torchvision.datasets import ImageFolder
-# from torch.utils.data import DataLoader
-# from sklearn.cluster import KMeans
+model = Sequential([
+    base_model,
+    GlobalAveragePooling2D(),
+    Dense(128, activation='relu'),
+    Dropout(0.5),
+    Dense(2, activation='softmax')  # Output layer for 2 classes
+])
 
-from models.DeepLearning import DeepLearning
-from models.DecisionClass import DecisionClass
-from models.KNNClass import KNNClass
-from models.RFC import RFC
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
-os.environ['`TF_ENABLE_ONEDNN_OPTS'] = '0'
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print(f"Using:{device}")
-# tf.config.experimental.set_memory_growth(tf.config.list_physical_devices('GPU'), True)
-print(tf.__version__)
-print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
+# Train the model
+model.fit(X_train, y_train, epochs=10, validation_data=(X_test, y_test), batch_size=32)
 
-from pathlib import Path
+# Save the trained model
+model.save("mask_detector_model.h5")
+print("Model trained and saved as mask_detector_model.h5")
 
-Home_dir = Path(__file__).parent.absolute()
+# Load the trained model
+model = load_model("mask_detector_model.h5")
+print("Model loaded successfully.")
 
-dataset_path = Home_dir / "cleaned_dataset"
+# Integrate face detection
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
-class Main:
-    def __init__(self):
-        self.dataset_loader = DatasetLoader(dataset_path)
-        
-        
-        
-        
+def detect_faces(image):
+    """
+    Detect faces in an image using OpenCV's Haar cascade.
+    """
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+    return faces
 
+def preprocess_faces(image, faces):
+    """
+    Preprocess each detected face for prediction.
+    """
+    face_images = []
+    for (x, y, w, h) in faces:
+        face = image[y:y+h, x:x+w]
+        face = cv2.resize(face, (224, 224))
+        face = face / 255.0
+        face_images.append(np.expand_dims(face, axis=0))
+    return face_images
+
+def predict_faces(image_path):
+    """
+    Detect and predict mask status for multiple faces in an image.
+    """
+    image = cv2.imread(image_path)
+    faces = detect_faces(image)
+    if len(faces) == 0:
+        print("No faces detected.")
+        return
+
+    face_images = preprocess_faces(image, faces)
+    for i, face_img in enumerate(face_images):
+        prediction = model.predict(face_img)
+        class_idx = np.argmax(prediction)
+        class_label = categories[class_idx]
+        confidence = prediction[0][class_idx]
+        print(f"Face {i+1}: {class_label} (Confidence: {confidence:.2f})")
+
+        # Draw bounding box and label on the image
+        x, y, w, h = faces[i]
+        color = (0, 255, 0) if class_label == "with_mask" else (0, 0, 255)
+        cv2.rectangle(image, (x, y), (x+w, y+h), color, 2)
+        cv2.putText(image, f"{class_label} ({confidence:.2f})", (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+
+    # Display the image with predictions
+    cv2.imshow("Mask Detection", image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+# Test on real-world images
 if __name__ == "__main__":
-    main = Main()
-
-
-
-
-
-
-
+    test_images = ["pictureface/jojo1.jpg", "pictureface/jojo2.jpg"]  # Replace with your image paths
+    for img_path in test_images:
+        print(f"Testing image: {img_path}")
+        predict_faces(img_path)
