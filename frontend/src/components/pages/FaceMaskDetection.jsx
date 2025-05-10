@@ -18,7 +18,8 @@ const FaceMaskDetection = () => {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isAlertShown, setIsAlertShown] = useState(false);
   const videoRef = useRef();
-  const pcRef = useRef();
+  const pcRef = useRef(null);
+  const localStreamRef = useRef(null);
 
   const constraints = {
     video: true,
@@ -35,10 +36,23 @@ const FaceMaskDetection = () => {
     setIsCameraOpen(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      videoRef.current.srcObject = stream;
+      localStreamRef.current = stream;
+
       const pc = new RTCPeerConnection();
       pcRef.current = pc;
 
       stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+
+      const inboundStream = new MediaStream();
+      pc.ontrack = (event) => {
+        if (event.track.kind === "video") {
+          inboundStream.addTrack(event.track);
+          if (videoRef.current) {
+            videoRef.current.srcObject = inboundStream;
+          }
+        }
+      };
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
@@ -56,14 +70,7 @@ const FaceMaskDetection = () => {
 
       const answer = await response.json();
       await pc.setRemoteDescription(new RTCSessionDescription(answer));
-
-      pc.ontrack = (event) => {
-        console.log("Remote track received", event.track.kind);
-        if (event.track.kind === "video") {
-          const inboundStream = new MediaStream([event.track]);
-          videoRef.current.srcObject = inboundStream;
-        }
-      };
+      console.log(answer);
     } catch (err) {
       if (err instanceof Error) {
         console.error(err.message);
@@ -75,15 +82,19 @@ const FaceMaskDetection = () => {
     setIsCameraOpen(false);
     handleAlertClose();
 
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((track) => track.stop());
+      localStreamRef.current = null;
+    }
+
     if (videoRef.current.srcObject) {
-      const stream = videoRef.current.srcObject;
-      const tracks = stream.getTracks();
-      tracks.forEach((track) => track.stop());
+      videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
       videoRef.current.srcObject = null;
     }
 
     if (pcRef.current) {
       pcRef.current.close();
+      pcRef.current = null;
     }
   }, []);
 
@@ -135,6 +146,7 @@ const FaceMaskDetection = () => {
           <video
             autoPlay
             playsInline
+            muted
             ref={videoRef}
             className="bg-gradient-to-b from-neutral-950 via-neutral-900 bg-neutral-800 rounded-3xl w-full min-h-[450px]: max-h-[450px] shadow-3xl border-8 border-black/80"
           ></video>

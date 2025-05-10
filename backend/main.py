@@ -1,20 +1,21 @@
 import cv2
 import numpy as np
-import asyncio
-from aiohttp import web
+from asyncio import Lock, gather
+from aiohttp.web import Application, json_response, run_app, RouteTableDef, Response
 from aiortc import RTCPeerConnection, RTCSessionDescription
 from aiortc.contrib.media import MediaStreamTrack
 from av import VideoFrame
-import aiohttp_cors
+from aiohttp_cors import ResourceOptions, setup
 from tensorflow.keras.models import load_model
 
 # โหลดโมเดล
 model = load_model("./models/mask_detector_model.h5")
 pcs = set()
-lock = asyncio.Lock()  # ป้องกัน predict ซ้อนกัน
+lock = Lock()  # ป้องกัน predict ซ้อนกัน
+
 
 # ตรวจแมส
-def detect_mask(frame: np.ndarray) -> str:
+def detect_mask(frame):
     try:
         img = cv2.resize(frame, (224, 224))
         img = img / 255.0
@@ -30,7 +31,7 @@ def detect_mask(frame: np.ndarray) -> str:
         print("Prediction error:", e)
         return "Error"
 
-# Custom video track
+
 class VideoTransformTrack(MediaStreamTrack):
     kind = "video"
 
@@ -46,55 +47,75 @@ class VideoTransformTrack(MediaStreamTrack):
             result = detect_mask(img)
 
         # วาดผล
-        cv2.putText(img, result, (30, 30), cv2.FONT_HERSHEY_SIMPLEX,
-                    1, (0, 255, 0), 2)
+        cv2.putText(img, result, (30, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
         new_frame = VideoFrame.from_ndarray(img, format="bgr24")
         new_frame.pts = frame.pts
         new_frame.time_base = frame.time_base
         return new_frame
 
-# WebRTC offer
+
+routes = RouteTableDef()
+
+
+@routes.get("/")
+async def hello(request):
+    return Response(text="Hello World!", status=200)
+
+
+@routes.post("/offer")
 async def offer(request):
     params = await request.json()
     offer = RTCSessionDescription(sdp=params["sdp"], type=params["type"])
     pc = RTCPeerConnection()
     pcs.add(pc)
 
+    @pc.on("connectionstatechange")
+    def on_connectionstatechange():
+        print(pc.connectionState)
+
     @pc.on("track")
     def on_track(track):
         print("Track received:", track.kind)
         if track.kind == "video":
+            local_video = VideoTransformTrack(track)
             pc.addTrack(VideoTransformTrack(track))
 
     await pc.setRemoteDescription(offer)
     answer = await pc.createAnswer()
     await pc.setLocalDescription(answer)
 
-    return web.json_response({
-        "sdp": pc.localDescription.sdp,
-        "type": pc.localDescription.type
-    })
+    return json_response(
+        {"sdp": pc.localDescription.sdp, "type": pc.localDescription.type}, status=200
+    )
+
 
 # ปิด connection
 async def on_shutdown(app):
-    await asyncio.gather(*[pc.close() for pc in pcs])
+    await gather(*[pc.close() for pc in pcs])
     pcs.clear()
 
+
 # สร้าง web server
-app = web.Application()
+app = Application()
+app.add_routes(routes)
 app.on_shutdown.append(on_shutdown)
-offer_route = app.router.add_post("/offer", offer)
 
 # CORS
-cors = aiohttp_cors.setup(app, defaults={
-    "*": aiohttp_cors.ResourceOptions(
-        allow_credentials=True,
-        expose_headers="*",
-        allow_headers="*",
-    )
-})
-cors.add(offer_route)
+cors = setup(
+    app,
+    defaults={
+        "http://localhost:5173": ResourceOptions(
+            allow_credentials=True,
+            expose_headers="*",
+            allow_methods=["GET", "POST"],
+            allow_headers=("Content-Type",),
+        )
+    },
+)
+
+for route in list(app.router.routes()):
+    cors.add(route)
 
 # Run server
-web.run_app(app, port=8080)
+run_app(app, port=8080)
