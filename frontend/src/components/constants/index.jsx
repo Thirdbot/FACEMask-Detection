@@ -73,7 +73,7 @@ export const membersData = [
 
 export const modelNames = [
   "Decision Tree",
-  "Deep Learning",
+  "Deep Learning (CNN)",
   "K-Nearest Neighbors",
   "Random Forest",
 ];

@@ -18,6 +18,7 @@ const FaceMaskDetection = () => {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isAlertShown, setIsAlertShown] = useState(false);
   const videoRef = useRef();
+  const pcRef = useRef();
 
   const constraints = {
     video: true,
@@ -36,21 +37,21 @@ const FaceMaskDetection = () => {
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       videoRef.current.srcObject = stream;
     } catch (err) {
-      if (err instanceof DOMException) {
+      if (err instanceof Error) {
         console.error(err.message);
       }
     }
   }, []);
 
   const handleCloseCamera = useCallback(() => {
+    setIsCameraOpen(false);
+    handleAlertClose();
+
     if (videoRef.current.srcObject) {
       const stream = videoRef.current.srcObject;
       const tracks = stream.getTracks();
       tracks.forEach((track) => track.stop());
       videoRef.current.srcObject = null;
-
-      setIsCameraOpen(false);
-      handleAlertClose();
     }
   }, []);
 
