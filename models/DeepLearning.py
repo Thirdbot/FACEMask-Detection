@@ -2,27 +2,36 @@ import os
 from pathlib import Path
 import numpy as np
 from tensorflow.keras.models import Sequential, load_model
-from tensorflow.keras.layers import Flatten, Dense, Dropout, Conv2D, MaxPooling2D,BatchNormalization, GlobalAveragePooling2D
+from tensorflow.keras.layers import Flatten, Dense, Dropout, Conv2D, MaxPooling2D, BatchNormalization, GlobalAveragePooling2D
 from sklearn.metrics import precision_score, recall_score, log_loss, accuracy_score
 
 class DeepLearning:
-    def __init__(self):
+    def __init__(self, save_folder):
         self.HOME_DIR = Path(__file__).parent.parent.absolute()
-        self.save_folder = f"{self.HOME_DIR}/save"
+        self.save_folder = save_folder
         self.model_name = "model.keras"
+        
+        self.size = None
+        self.xtrain = None
+        self.ytrain = None
+        
+        self.xtest = None
+        self.ytest = None
         # เก็บ path ของ neural network model
         self.save_path = f"{self.save_folder}/{self.model_name}"
-
-        # เช็คว่าถ้าไม่มี path ที่เก็บ model ให้สร้าง folder save ไว้ทำการเก็บ model
-        if not (os.path.exists(self.save_folder)):
-            os.mkdir(self.save_folder)
-
+        
+    def __get_attribute__(self, item):
+        return super(DeepLearning, self).__getattribute__(item)
+    
+    def __getattr__(self, item):
+        return super(DeepLearning, self).__setattr__(self, item, None)
+    
     def model_create(self):
-                # สร้าง object ของ model
+        # สร้าง object ของ model
         model = Sequential()
 
         # เพิ่มแต่ล่ะ convolution layers ให้ model
-        model.add(Conv2D(32, (3, 3), activation='relu', input_shape=(128, 128, 3)))
+        model.add(Conv2D(32, (3, 3), activation='relu', input_shape=(3, self.size, self.size), data_format='channels_first'))
         model.add(BatchNormalization())
         model.add(MaxPooling2D(pool_size=(2, 2)))
 
@@ -51,19 +60,20 @@ class DeepLearning:
         model.add(Dropout(0.5))
         model.add(Dense(3, activation='softmax'))
         
-        print(model.summary())
+        # print(model.summary())
         return model
-    def train(self,model,x_train,y_train,epochs=10):
+    
+    def train(self,model,epochs=10):
         
         model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
-        model.fit(x_train, y_train, epochs=epochs)
+        model.fit(self.xtrain,self.ytrain, epochs=epochs)
         
         model.save(self.save_path)
     
     def load_model(self):
-        model = load_model("save/model.keras")
-        model.summary()
+        model = load_model(f"{self.save_folder}/model.keras")
+        # model.summary()
         return model
     
     def evaluate(self,model,x_test,y_test):
@@ -79,8 +89,8 @@ class DeepLearning:
         recall = recall_score(y_test, y_pred, average="weighted")
 
         # แสดงผลลัพธ์
-        print(f"Precision: {precision}")
-        print(f"Recall: {recall}")
+        # print(f"Precision: {precision}")
+        # print(f"Recall: {recall}")
 
         return precision, recall
     

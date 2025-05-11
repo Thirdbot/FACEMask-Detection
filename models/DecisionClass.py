@@ -14,6 +14,13 @@ class DecisionClass:
         self.min_samples_leaf = 1
         self.random_state = 42
         
+        
+    # def set_attr(self,**data):
+    #     for key,value in data.items():
+    #         setattr(self,key,value)
+    # def get_attr(self):
+    #     return self.__dict__
+        
     def model_create(self):
         decision_tree_model = DecisionTreeClassifier(self.random_state)
         return decision_tree_model

@@ -14,7 +14,7 @@ import re
 # from sklearn.ensemble import RandomForestClassifier
 
 # from sklearn.tree import DecisionTreeClassifier
-import tensorflow as tf
+# import tensorflow as tf
 
 
 from datasetLoader import DatasetLoader
@@ -31,36 +31,32 @@ import random
 #image mismatch handler
 import shutil
 import torch
-# import torchvision.transforms as transforms
-# import torchvision.models as models
-# from torchvision.datasets import ImageFolder
-# from torch.utils.data import DataLoader
-# from sklearn.cluster import KMeans
+from modelLoader import ModelLoader
 
-from models.DeepLearning import DeepLearning
-from models.DecisionClass import DecisionClass
-from models.KNNClass import KNNClass
-from models.RFC import RFC
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
-os.environ['`TF_ENABLE_ONEDNN_OPTS'] = '0'
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f"Using:{device}")
 # tf.config.experimental.set_memory_growth(tf.config.list_physical_devices('GPU'), True)
-print(tf.__version__)
-print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
+# print(tf.__version__)
+# print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
 
 from pathlib import Path
 
 Home_dir = Path(__file__).parent.absolute()
 
-dataset_path = Home_dir / "cleaned_dataset"
+dataset_path = Home_dir / "cleaned_dataset" / "data"
 
 class Main:
     def __init__(self):
-        self.dataset_loader = DatasetLoader(dataset_path)
-        
-        
-        
+        self.size =128
+        self.dataset_loader = DatasetLoader(dataset_path,self.size)
+        self.xtrain,self.ytrain,self.xtest,self.ytest = self.dataset_loader.get_train_test_data()
+        self.model_loader = ModelLoader(self.xtrain,
+                                        self.ytrain,
+                                        self.xtest,
+                                        self.ytest,
+                                        self.size)
         
 
 if __name__ == "__main__":
