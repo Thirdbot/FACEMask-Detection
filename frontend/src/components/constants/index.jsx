@@ -52,7 +52,7 @@ export const membersData = [
   {
     name: "นาย พันธุ์ธัช สุวรรณวัฒนะ",
     studentId: 6630250281,
-    responsibility: "จัดการและทำความสะอาดข้อมูล Dataset และ สร้าง AI Model",
+    responsibility: "สร้าง AI Model และ จัดการข้อมูล Dataset",
   },
   {
     name: "นาย ปุณณภพ มีฤทธิ์",

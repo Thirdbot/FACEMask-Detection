@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 from utils.detect_mask import detect_mask_multi
 # from tensorflow.keras.models import load_model  # type: ignore
+<<<<<<< HEAD
 import joblib
 from pathlib import Path
 
@@ -12,8 +13,18 @@ origin = "http://localhost:5173"
 home_path = Path(__file__).parent.parent.absolute()
 path = home_path / "save" / "DeepLearning.h5"
 model = joblib.load(path)
+=======
+
+import pathlib
+
+backend_path = pathlib.Path(__file__).parent.absolute()
+origins = ["http://localhost:5173"]
+path = f"{backend_path}/models/DecisionClass.h5"
+# model = load_model(path)
+>>>>>>> test_something
 
 app = Flask(__name__)
+
 
 
 @app.get("/")
@@ -22,7 +33,7 @@ def index():
 
 
 @app.post("/api/mask-detection")
-@cross_origin(origin=origin, methods="POST", allow_headers="Content-Type")
+@cross_origin(origins=origins, methods=["POST"], allow_headers=["Content-Type"])
 def predict():
     try:
         data = request.get_json()
@@ -34,7 +45,7 @@ def predict():
         img_bytes = base64.b64decode(img_data)
         img_array = np.frombuffer(img_bytes, np.uint8)
         frame = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
-        results = detect_mask_multi(frame, model)
+        results = detect_mask_multi(frame, path)
         return jsonify({"results": results})
     except Exception as err:
         print(err)
@@ -42,5 +53,9 @@ def predict():
             {"results": [{"box": None, "label": "Error", "confidence": None}]}
         )
 
+<<<<<<< HEAD
 if __name__ == "__main__":
     app.run(debug=True)
+=======
+app.run(debug=True)
+>>>>>>> test_something
