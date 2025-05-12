@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import numpy as np
 from tensorflow.keras.models import Sequential, load_model
+from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 from tensorflow.keras.layers import Flatten, Dense, Dropout, Conv2D, MaxPooling2D, BatchNormalization, GlobalAveragePooling2D
 from sklearn.metrics import precision_score, recall_score, log_loss, accuracy_score
 
@@ -27,56 +28,56 @@ class DeepLearning:
     def model_create(self):
         # สร้าง object ของ model
         
-        # model = Sequential()
+        model = Sequential()
 
-        # # เพิ่มแต่ล่ะ convolution layers ให้ model
-        # model.add(Conv2D(32, (3, 3), activation='relu', input_shape=(self.size,self.size,3), data_format='channels_last'))
-        # model.add(BatchNormalization())
-        # model.add(MaxPooling2D(pool_size=(2, 2)))
+        # เพิ่มแต่ล่ะ convolution layers ให้ model
+        model.add(Conv2D(32, (3, 3), activation='relu', input_shape=(self.size,self.size,3), data_format='channels_last'))
+        model.add(BatchNormalization())
+        model.add(MaxPooling2D(pool_size=(2, 2)))
 
-        # # เพิ่มแต่ล่ะ convolution layers ให้ model
-        # model.add(Conv2D(64, (3, 3), activation='relu'))
-        # model.add(BatchNormalization())
-        # model.add(MaxPooling2D(pool_size=(2, 2)))
+        # เพิ่มแต่ล่ะ convolution layers ให้ model
+        model.add(Conv2D(64, (3, 3), activation='relu'))
+        model.add(BatchNormalization())
+        model.add(MaxPooling2D(pool_size=(2, 2)))
 
-        # # เพิ่มแต่ล่ะ convolution layers ให้ model
-        # model.add(Conv2D(128, (3, 3), activation='relu'))
-        # model.add(BatchNormalization())
-        # model.add(MaxPooling2D(pool_size=(2, 2)))
+        # เพิ่มแต่ล่ะ convolution layers ให้ model
+        model.add(Conv2D(128, (3, 3), activation='relu'))
+        model.add(BatchNormalization())
+        model.add(MaxPooling2D(pool_size=(2, 2)))
 
-        # # เพิ่มแต่ล่ะ convolution layers ให้ model
-        # model.add(Conv2D(256, (3, 3), activation='relu'))
-        # model.add(BatchNormalization())
-        # model.add(MaxPooling2D(pool_size=(2, 2)))
+        # เพิ่มแต่ล่ะ convolution layers ให้ model
+        model.add(Conv2D(256, (3, 3), activation='relu'))
+        model.add(BatchNormalization())
+        model.add(MaxPooling2D(pool_size=(2, 2)))
 
-        # # ลดมิติ
-        # model.add(GlobalAveragePooling2D())
+        # ลดมิติ
+        model.add(GlobalAveragePooling2D())
 
 
-        # model.add(Dense(512, activation='relu'))
-        # model.add(Dropout(0.5))
-        # model.add(Dense(512, activation='relu'))
-        # model.add(Dropout(0.5))
-        # model.add(Dense(self.num_classes, activation='softmax'))
+        model.add(Dense(512, activation='relu'))
+        model.add(Dropout(0.5))
+        model.add(Dense(512, activation='relu'))
+        model.add(Dropout(0.5))
+        model.add(Dense(self.num_classes, activation='softmax'))
         
-        # print(model.summary())
+        # # print(model.summary())
         
-        base_model = MobileNetV2(weights="imagenet", include_top=False, input_shape=(224, 224, 3))
-        base_model.trainable = False  # Freeze base model layers
+        # base_model = MobileNetV2(weights="imagenet", include_top=False, input_shape=(self.size, self.size, 3))
+        # base_model.trainable = False  # Freeze base model layers
 
-        model = Sequential([
-            base_model,
-            GlobalAveragePooling2D(),
-            Dense(128, activation='relu'),
-            Dropout(0.5),
-            Dense(2, activation='softmax')  # Output layer for 2 classes
-        ])
+        # model = Sequential([
+        #     base_model,
+        #     GlobalAveragePooling2D(),
+        #     Dense(128, activation='relu'),
+        #     Dropout(0.5),
+        #     Dense(2, activation='softmax')  # Output layer for 2 classes
+        # ])
         
         return model
     
     def train(self,model,epochs=10):
         
-        model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
         model.fit(self.train_data, epochs=epochs)
         
