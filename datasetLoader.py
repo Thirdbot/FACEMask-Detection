@@ -3,7 +3,8 @@ import os
 import cv2
 import numpy as np
 import torch
-from torchvision import datasets, transforms,ImageDataGenerator
+from torchvision import datasets, transforms
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from torch.utils.data import DataLoader, random_split
 from sklearn.model_selection import train_test_split
 
@@ -34,7 +35,7 @@ class DatasetLoader:
         )
 
         # Create training and validation generators
-        train_generator = datagen.flow_from_directory(
+        self.train_generator = datagen.flow_from_directory(
             self.datasetpath,
             target_size=(self.size, self.size),
             batch_size=self.batch_size,
@@ -42,7 +43,7 @@ class DatasetLoader:
             subset='training'
         )
 
-        validation_generator = datagen.flow_from_directory(
+        self.validation_generator = datagen.flow_from_directory(
             self.datasetpath,
             target_size=(self.size, self.size),
             batch_size=self.batch_size,

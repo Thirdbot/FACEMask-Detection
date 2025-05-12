@@ -28,7 +28,7 @@ class DeepLearning:
         model = Sequential()
 
         # เพิ่มแต่ล่ะ convolution layers ให้ model
-        model.add(Conv2D(32, (3, 3), activation='relu', input_shape=(3, self.size, self.size), data_format='channels_first'))
+        model.add(Conv2D(32, (3, 3), activation='relu', input_shape=(self.size,self.size,3), data_format='channels_last'))
         model.add(BatchNormalization())
         model.add(MaxPooling2D(pool_size=(2, 2)))
 
