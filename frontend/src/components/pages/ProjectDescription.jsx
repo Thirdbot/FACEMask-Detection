@@ -45,7 +45,7 @@ const ProjectDescription = () => {
               <Tooltip
                 title={<p>ลิ้งค์โค้ดของโปรเจค</p>}
                 arrow
-                placement="bottom"
+                placement="right"
               >
                 <a
                   href="https://github.com/Thirdbot/FACEMask-Detection"
@@ -62,7 +62,7 @@ const ProjectDescription = () => {
               <Tooltip
                 title={<p>ลิ้งค์ของข้อมูล Dataset</p>}
                 arrow
-                placement="bottom"
+                placement="right"
               >
                 <a
                   href="https://www.kaggle.com/datasets/omkargurav/face-mask-dataset"
