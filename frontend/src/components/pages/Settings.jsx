@@ -66,7 +66,7 @@ const Settings = () => {
               labelId="select-model"
               id="select-model"
               label="Model"
-              defaultValue={"Deep Learning"}
+              defaultValue={"Deep Learning (CNN)"}
             >
               {modelNames.map((name) => (
                 <MenuItem key={uuid()} value={name}>

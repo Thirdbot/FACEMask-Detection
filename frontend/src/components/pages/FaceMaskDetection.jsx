@@ -151,8 +151,8 @@ const FaceMaskDetection = () => {
             autoPlay
             playsInline
             ref={videoRef}
-            className="bg-gradient-to-b from-neutral-950 via-neutral-900 bg-neutral-800 rounded-3xl w-full min-h-[450px]: max-h-[450px] shadow-3xl border-8 border-black/80 box-border"
-          ></video>
+            className="bg-gradient-to-b from-neutral-950 via-neutral-900 bg-neutral-800 rounded-3xl w-full h-[450px] aspect-[16/9] shadow-3xl border-8 border-black/80 box-border object-cover"
+          />
         </div>
         <ButtonGroup
           className="mt-6 w-full flex items-center justify-evenly"
