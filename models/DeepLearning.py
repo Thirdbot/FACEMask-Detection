@@ -14,6 +14,7 @@ class DeepLearning:
         self.size = None
         self.train_data = None
         self.validate_data = None
+        self.num_classes = 2
         # เก็บ path ของ neural network model
         self.save_path = f"{self.save_folder}/{self.model_name}"
         
@@ -55,7 +56,7 @@ class DeepLearning:
         model.add(Dropout(0.5))
         model.add(Dense(512, activation='relu'))
         model.add(Dropout(0.5))
-        model.add(Dense(3, activation='softmax'))
+        model.add(Dense(self.num_classes, activation='softmax'))
         
         # print(model.summary())
         return model
