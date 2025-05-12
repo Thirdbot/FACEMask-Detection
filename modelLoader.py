@@ -1,4 +1,3 @@
-
 from models.DeepLearning import DeepLearning
 from models.DecisionClass import DecisionClass
 from models.KNNClass import KNNClass
@@ -24,8 +23,6 @@ class ModelLoader:
         
         self.initilize_class = self.runfunc(self.func)
         init_args_dict = self.initilize_class.__dict__.items()
-        print(init_args_dict)
-        print(class_args_key)
         
         self.initilize_class.xtrain = xtrain
         self.initilize_class.ytrain = ytrain

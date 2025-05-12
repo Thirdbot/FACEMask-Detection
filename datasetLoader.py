@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader, random_split
 from sklearn.model_selection import train_test_split
 
 class DatasetLoader:
-    def __init__(self, dataset_path, size, batch_size=1):
+    def __init__(self, dataset_path, size, batch_size=2):
         self.datasetpath = dataset_path
         self.size = size
         self.batch_size = batch_size
@@ -25,14 +25,14 @@ class DatasetLoader:
         # Load dataset using ImageFolder
         self.dataset = datasets.ImageFolder(self.datasetpath, transform=self.transform)
         
-        # self.dataloaderbatch = DataLoader(self.dataset,batch_size=self.batch_size,shuffle=True)
+        self.dataloaderbatch = DataLoader(self.dataset,batch_size=self.batch_size,shuffle=True)
         
         # Get all images and labels
         self.images = []
         self.labels = []
         
         # Load all data
-        for img,label in self.dataset:
+        for img,label in self.dataloaderbatch:
             self.images.append(img)
             self.labels.append(label)
         
