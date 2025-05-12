@@ -77,3 +77,12 @@ export const modelNames = [
   "K-Nearest Neighbors",
   "Random Forest",
 ];
+
+export const mediaStramConstraints = {
+  video: {
+    width: { min: 1280, ideal: 1920, max: 2560 },
+    height: { min: 720, ideal: 1080, max: 1440 },
+    frameRate: { min: 30, ideal: 60, max: 90 },
+  },
+  audio: false,
+};

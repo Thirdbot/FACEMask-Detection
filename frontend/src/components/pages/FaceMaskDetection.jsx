@@ -14,6 +14,7 @@ import AppContainer from "../containers/AppContainer";
 import Sidebar from "../ui/Sidebar";
 import PageContent from "../containers/PageContent";
 import Title from "../ui/Title";
+import { mediaStramConstraints } from "../constants";
 
 const FaceMaskDetection = () => {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -21,11 +22,6 @@ const FaceMaskDetection = () => {
   const videoRef = useRef();
   const pcRef = useRef(null);
   const localStreamRef = useRef(null);
-
-  const constraints = {
-    video: true,
-    audio: false,
-  };
 
   useEffect(() => {
     if (isCameraOpen) {
@@ -36,7 +32,9 @@ const FaceMaskDetection = () => {
   const handleOpenCamera = useCallback(async () => {
     setIsCameraOpen(true);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      const stream = await navigator.mediaDevices.getUserMedia(
+        mediaStramConstraints
+      );
       videoRef.current.srcObject = stream;
       localStreamRef.current = stream;
       await handleStartConnection(stream);
@@ -151,7 +149,7 @@ const FaceMaskDetection = () => {
             autoPlay
             playsInline
             ref={videoRef}
-            className="bg-gradient-to-b from-neutral-950 via-neutral-900 bg-neutral-800 rounded-3xl w-full h-[450px] aspect-[16/9] shadow-3xl border-8 border-black/80 box-border object-cover"
+            className="bg-gradient-to-b from-neutral-950 via-neutral-900 bg-neutral-800 rounded-3xl w-full h-[450px] object-cover shadow-3xl border-8 border-black/80 box-border"
           />
         </div>
         <ButtonGroup
