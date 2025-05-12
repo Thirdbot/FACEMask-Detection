@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import axios from "axios";
 import { Button, ButtonGroup } from "@mui/material";
 import VideocamIcon from "@mui/icons-material/Videocam";
 import VideocamOffIcon from "@mui/icons-material/VideocamOff";
@@ -13,16 +14,14 @@ import AppContainer from "../containers/AppContainer";
 import Sidebar from "../ui/Sidebar";
 import PageContent from "../containers/PageContent";
 import Title from "../ui/Title";
+import { mediaStramConstraints } from "../constants";
 
 const FaceMaskDetection = () => {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isAlertShown, setIsAlertShown] = useState(false);
   const videoRef = useRef();
-
-  const constraints = {
-    video: true,
-    audio: false,
-  };
+  const pcRef = useRef(null);
+  const localStreamRef = useRef(null);
 
   useEffect(() => {
     if (isCameraOpen) {
@@ -33,29 +32,76 @@ const FaceMaskDetection = () => {
   const handleOpenCamera = useCallback(async () => {
     setIsCameraOpen(true);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      const stream = await navigator.mediaDevices.getUserMedia(
+        mediaStramConstraints
+      );
       videoRef.current.srcObject = stream;
+      localStreamRef.current = stream;
+      await handleStartConnection(stream);
     } catch (err) {
-      if (err instanceof DOMException) {
+      if (err instanceof Error) {
         console.error(err.message);
+        handleCloseConnection();
       }
     }
   }, []);
 
   const handleCloseCamera = useCallback(() => {
-    if (videoRef.current.srcObject) {
-      const stream = videoRef.current.srcObject;
-      const tracks = stream.getTracks();
-      tracks.forEach((track) => track.stop());
-      videoRef.current.srcObject = null;
-
-      setIsCameraOpen(false);
-      handleAlertClose();
-    }
+    setIsCameraOpen(false);
+    handleAlertClose();
+    handleCloseConnection();
   }, []);
 
   const handleAlertClose = useCallback(() => {
     setIsAlertShown(false);
+  }, []);
+
+  const handleStartConnection = useCallback(async (stream) => {
+    const pc = new RTCPeerConnection();
+    pcRef.current = pc;
+
+    stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+
+    const inboundStream = new MediaStream();
+    pc.ontrack = (event) => {
+      if (event.track.kind === "video") {
+        inboundStream.addTrack(event.track);
+        if (videoRef.current) {
+          videoRef.current.srcObject = inboundStream;
+        }
+      }
+    };
+
+    try {
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      const { sdp, type } = pc.localDescription;
+      const { data } = await axios.post("http://localhost:8080/offer", {
+        sdp,
+        type,
+      });
+      await pc.setRemoteDescription(new RTCSessionDescription(data));
+      console.log(data);
+    } catch (err) {
+      throw err;
+    }
+  }, []);
+
+  const handleCloseConnection = useCallback(() => {
+    if (pcRef.current) {
+      pcRef.current.close();
+      pcRef.current = null;
+    }
+
+    if (videoRef.current.srcObject) {
+      videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
+      videoRef.current.srcObject = null;
+    }
+
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((track) => track.stop());
+      localStreamRef.current = null;
+    }
   }, []);
 
   return (
@@ -103,8 +149,8 @@ const FaceMaskDetection = () => {
             autoPlay
             playsInline
             ref={videoRef}
-            className="bg-gradient-to-b from-neutral-950 via-neutral-900 bg-neutral-800 rounded-3xl w-full min-h-[450px]: max-h-[450px] shadow-3xl border-8 border-black/80"
-          ></video>
+            className="bg-gradient-to-b from-neutral-950 via-neutral-900 bg-neutral-800 rounded-3xl w-full h-[450px] object-cover shadow-3xl border-8 border-black/80 box-border"
+          />
         </div>
         <ButtonGroup
           className="mt-6 w-full flex items-center justify-evenly"
