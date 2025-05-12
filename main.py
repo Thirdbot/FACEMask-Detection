@@ -51,11 +51,9 @@ class Main:
     def __init__(self):
         self.size =128
         self.dataset_loader = DatasetLoader(dataset_path,self.size)
-        self.xtrain,self.ytrain,self.xtest,self.ytest = self.dataset_loader.get_train_test_data()
-        self.model_loader = ModelLoader(self.xtrain,
-                                        self.ytrain,
-                                        self.xtest,
-                                        self.ytest,
+        self.train,self.validation = self.dataset_loader.get_train_test_data()
+        self.model_loader = ModelLoader(self.train,
+                                        self.validation,
                                         self.size)
         
 

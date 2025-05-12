@@ -12,11 +12,8 @@ class DeepLearning:
         self.model_name = "model.keras"
         
         self.size = None
-        self.xtrain = None
-        self.ytrain = None
-        
-        self.xtest = None
-        self.ytest = None
+        self.train_data = None
+        self.validate_data = None
         # เก็บ path ของ neural network model
         self.save_path = f"{self.save_folder}/{self.model_name}"
         
@@ -67,7 +64,7 @@ class DeepLearning:
         
         model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
-        model.fit(self.xtrain,self.ytrain, epochs=epochs)
+        model.fit(self.train_data, epochs=epochs)
         
         model.save(self.save_path)
     

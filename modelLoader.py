@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 
 class ModelLoader:
-    def __init__(self,xtrain,ytrain,xtest,ytest,size) -> None:
+    def __init__(self,train,validation,size) -> None:
         self.model_function = {
             "DeepLearning":"models.DeepLearning",
             "DecisionClass":"models.DecisionClass",
@@ -24,10 +24,8 @@ class ModelLoader:
         self.initilize_class = self.runfunc(self.func)
         init_args_dict = self.initilize_class.__dict__.items()
         
-        self.initilize_class.xtrain = xtrain
-        self.initilize_class.ytrain = ytrain
-        self.initilize_class.xtest = xtest
-        self.initilize_class.ytest = ytest
+        self.initilize_class.train_data = train
+        self.initilize_class.validate_data = validation
         self.initilize_class.size = size
         
         model = self.initilize_class.model_create()
