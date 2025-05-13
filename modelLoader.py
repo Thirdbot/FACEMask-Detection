@@ -51,6 +51,14 @@ class ModelLoader:
     def load_model(self,file_name):
         return joblib.load(f"{self.save_folder}/{file_name}.h5")
     
+    def evaluate(self,model):
+        print(f"{self.selected} evaluating")
+        return self.initilize_class.evaluate(model)
+    
+    def score(self,model):
+        print(f"{self.selected} scoring")
+        return self.initilize_class.score(model)
+    
     def runfunc(self,func):
         os.makedirs(self.save_folder,exist_ok=True)
         return func()

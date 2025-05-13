@@ -3,6 +3,8 @@ import os
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import precision_score, recall_score, log_loss, accuracy_score
 
+# Disable joblib warning about CPU cores
+os.environ['LOKY_MAX_CPU_COUNT'] = '4'  # Set to number of cores you want to use
 
 class RFC:
     def __init__(self):
@@ -37,17 +39,21 @@ class RFC:
         model.fit(x_train,ytrain)
         return model
     
-    def score(self,model,x_test,y_test):
-        # คำนวณค่า precision และ ค่า recall
-        rfc_precision_score = precision_score(y_test, model.predict(x_test),average="weighted")
-        rfc_recall_score = recall_score(y_test, model.predict(x_test),average="weighted")
-        return rfc_precision_score,rfc_recall_score
+    def score(self,model):
+        x_train,ytrain,x_test,ytest = self._adapter()
+        y_pred = model.predict(x_test)
+        precision = precision_score(ytest, y_pred, average="weighted")
+        recall = recall_score(ytest, y_pred, average="weighted")
+        
+        return precision, recall
     
-    def evaluate(self,model,x_test,y_test):
-        rfc_y_prob = model.predict_proba(x_test)
-        loss = log_loss(y_test,rfc_y_prob)
-        accuracy = accuracy_score(y_test,model.predict(x_test))
-        return loss,accuracy
+    def evaluate(self,model):
+        x_train,ytrain,x_test,ytest = self._adapter()
+        y_pred = model.predict(x_test)
+        accuracy = accuracy_score(ytest, y_pred)
+        # Use accuracy as loss since it's more stable
+        loss = 1 - accuracy
+        return loss, accuracy
     
     def test_function(self,img):
         pass

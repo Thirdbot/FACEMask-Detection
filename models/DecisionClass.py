@@ -4,6 +4,9 @@ from pathlib import Path
 import os
 import joblib  # Add this import for model saving
 
+# Disable joblib warning about CPU cores
+os.environ['LOKY_MAX_CPU_COUNT'] = '4'  # Set to number of cores you want to use
+
 class DecisionClass:
     def __init__(self):
         self.max_depth = 10
@@ -45,19 +48,20 @@ class DecisionClass:
         return model
     
     
-    def evaluate(self,model,x_test,y_test):
-        dt_y_prob = model.predict_proba(x_test)
-        loss = log_loss(y_test,dt_y_prob)
-        accuracy = accuracy_score(y_test,model.predict(x_test))
-       
-        return loss,accuracy
+    def evaluate(self,model):
+        x_train,ytrain,x_test,ytest = self._adapter()
+        y_pred = model.predict(x_test)
+        accuracy = accuracy_score(ytest, y_pred)
+        # Use accuracy as loss since it's more stable
+        loss = 1 - accuracy
+        return loss, accuracy
     
-    def score(self,model,x_test,y_test):
-        
+    def score(self,model):
+        x_train,ytrain,x_test,ytest = self._adapter()
         dt_y_pred = model.predict(x_test)
-        dt_precision = precision_score(y_test, dt_y_pred, average='weighted')
-        dt_recall = recall_score(y_test, dt_y_pred, average='weighted')
-        return dt_precision,dt_recall
+        dt_precision = precision_score(ytest, dt_y_pred, average='weighted')
+        dt_recall = recall_score(ytest, dt_y_pred, average='weighted')
+        return dt_precision, dt_recall
     
     def test_function(self,img):
         pass

@@ -4,6 +4,9 @@ from pathlib import Path
 import os
 import joblib
 
+# Disable joblib warning about CPU cores
+os.environ['LOKY_MAX_CPU_COUNT'] = '4'  # Set to number of cores you want to use
+
 class KNNClass:
     def __init__(self):
         self.n_neighbors = 15
@@ -36,18 +39,21 @@ class KNNClass:
         model.fit(x_train,ytrain)
         return model
     
-    def evaluate(self,model,x_test,y_test):
+    def evaluate(self,model):
+        x_train,ytrain,x_test,ytest = self._adapter()
         y_pred = model.predict(x_test)
-        accuracy = accuracy_score(y_test,y_pred)
-        loss = log_loss(y_test,y_pred)
-        return accuracy,loss
+        accuracy = accuracy_score(ytest, y_pred)
+        # Use accuracy as loss since it's more stable
+        loss = 1 - accuracy
+        return accuracy, loss
     
-    def score(self,model,x_test,y_test):
+    def score(self,model):
+        x_train,ytrain,x_test,ytest = self._adapter()
         y_pred_knn = model.predict(x_test)
-        accuracy_knn = accuracy_score(y_test, y_pred_knn)
-        precision = precision_score(y_test,y_pred_knn,average="weighted")
-        recall = recall_score(y_test,y_pred_knn,average="weighted")
-        return accuracy_knn,precision,recall
+        accuracy_knn = accuracy_score(ytest, y_pred_knn)
+        precision = precision_score(ytest, y_pred_knn, average="weighted")
+        recall = recall_score(ytest, y_pred_knn, average="weighted")
+        return accuracy_knn, precision, recall
     
     def test_function(self,img):
         pass

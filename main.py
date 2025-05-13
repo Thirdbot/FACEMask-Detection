@@ -51,20 +51,60 @@ class Main:
     def __init__(self):
         self.size =128
         self.dataset_loader = DatasetLoader(dataset_path,self.size)
-        self.train,self.validation = self.dataset_loader.get_train_test_data()
-        self.model_loader = ModelLoader(self.train,
-                                        self.validation,
+        self.train_data,self.validation_data = self.dataset_loader.get_train_test_data()
+        self.model_loader = ModelLoader(self.train_data,
+                                        self.validation_data,
                                         self.size)
         
-        self.name = "RFC"
+        self.model_list = ["KNNClass","DecisionClass","DeepLearning","RFC"]
         
-        model_func = self.model_loader.select(self.name)
+    def create_model(self,model_name):
+        model_func = self.model_loader.select(model_name)
         self.model = self.model_loader.create_model(model_func)
+    
+    def train_all(self):
+        for model_name in self.model_list:
+            self.create_model(model_name)
+            self.model_loader.train(self.model,1)
+            self.model_loader.save_model(self.model,model_name)
+            
+    def train(self,model_name):
         self.model_loader.train(self.model,1)
-        self.model_loader.save_model(self.model,self.name)
+        self.model_loader.save_model(self.model,model_name)
+    
+    
+    def load_model(self,model_name):
+        print(f"Loading {model_name} model")
+        return self.model_loader.load_model(model_name)
+    
+    def evaluate_model(self,model_name):
+        model = self.model_loader.load_model(model_name)
+        return self.model_loader.evaluate(model)
+    
+    def score_model(self,model_name):
+        model = self.model_loader.load_model(model_name)
+        return self.model_loader.score(model)
+    
+    def evaluate_all(self):
+        eval_dict = {}
+        for model_name in self.model_list:
+            self.create_model(model_name)
+            eval_dict[model_name] = self.evaluate_model(model_name)
+        return eval_dict
+    def score_all(self):
+        score_dict = {}
+        for model_name in self.model_list:
+            self.create_model(model_name)
+            score_dict[model_name] = self.score_model(model_name)
+        return score_dict
 
 if __name__ == "__main__":
     main = Main()
+    main.create_model("DecisionClass")
+    # main.train_all()
+    # main.train("DeepLearning")
+    print(main.evaluate_all())
+    print(main.score_all())
 
 
 

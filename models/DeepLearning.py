@@ -82,27 +82,19 @@ class DeepLearning:
         # print(f"model saved to {self.save_path}")
         # model.save(self.save_path)
     
-    def load_model(self):
-        model = load_model(f"{self.save_folder}/model.keras")
-        # model.summary()
-        return model
-    
-    def evaluate(self,model,x_test,y_test):
-        loss, accuracy = model.evaluate(x_test,y_test)
+    def evaluate(self,model):
+        xtrain,ytrain,xtest,ytest = self._adapter()
+        loss, accuracy = model.evaluate(xtest,ytest)
         return loss, accuracy
     
-    def score(self,model,x_test,y_test):
-        
-        y_pred = np.argmax(model.predict(x_test), axis=-1)
-        y_true = np.argmax(y_test, axis=-1)  # Convert one-hot encoded y_test to class indices
+    def score(self,model):  
+        xtrain,ytrain,xtest,ytest = self._adapter()
+        y_pred = np.argmax(model.predict(xtest), axis=-1)
+        y_true = np.argmax(ytest, axis=-1)  # Convert one-hot encoded y_test to class indices
 
         # คำนวณค่า precision และ recall
         precision = precision_score(y_true, y_pred, average="weighted")
         recall = recall_score(y_true, y_pred, average="weighted")
-
-        # แสดงผลลัพธ์
-        # print(f"Precision: {precision}")
-        # print(f"Recall: {recall}")
 
         return precision, recall
     
