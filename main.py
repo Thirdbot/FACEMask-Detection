@@ -56,6 +56,12 @@ class Main:
                                         self.validation,
                                         self.size)
         
+        self.name = "RFC"
+        
+        model_func = self.model_loader.select(self.name)
+        self.model = self.model_loader.create_model(model_func)
+        self.model_loader.train(self.model,1)
+        self.model_loader.save_model(self.model,self.name)
 
 if __name__ == "__main__":
     main = Main()

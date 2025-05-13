@@ -7,6 +7,7 @@ from torchvision import datasets, transforms
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from torch.utils.data import DataLoader, random_split
 from sklearn.model_selection import train_test_split
+import tensorflow as tf
 
 class DatasetLoader:
     def __init__(self, dataset_path, size, batch_size=2):
@@ -23,7 +24,7 @@ class DatasetLoader:
                                std=[0.229, 0.224, 0.225])  # ImageNet normalization
         ])
                 
-                # Create data generators for training and validation
+        # Create data generators for training and validation
         datagen = ImageDataGenerator(
             rescale=1./255,
             validation_split=0.2,
@@ -40,7 +41,9 @@ class DatasetLoader:
             target_size=(self.size, self.size),
             batch_size=self.batch_size,
             class_mode='categorical',
-            subset='training'
+            subset='training',
+            shuffle=True,
+    
         )
 
         self.validation_generator = datagen.flow_from_directory(
@@ -48,7 +51,8 @@ class DatasetLoader:
             target_size=(self.size, self.size),
             batch_size=self.batch_size,
             class_mode='categorical',
-            subset='validation'
+            subset='validation',
+            shuffle=True
         )
         
         # # Load dataset using ImageFolder
@@ -80,7 +84,27 @@ class DatasetLoader:
         # )
          
     def get_train_test_data(self):
-        return self.train_generator, self.validation_generator
+        # Get all batches from generators
+        train_batches = []
+        val_batches = []
+        
+        # Extract all training batches
+        for _ in range(len(self.train_generator)):
+            batch = next(self.train_generator)
+            train_batches.append(batch)
+            
+        # Extract all validation batches
+        for _ in range(len(self.validation_generator)):
+            batch = next(self.validation_generator)
+            val_batches.append(batch)
+            
+        # Separate images and labels from batches
+        x_train = np.concatenate([batch[0] for batch in train_batches])
+        y_train = np.concatenate([batch[1] for batch in train_batches])
+        x_test = np.concatenate([batch[0] for batch in val_batches])
+        y_test = np.concatenate([batch[1] for batch in val_batches])
+        
+        return (x_train, y_train), (x_test, y_test)
     
     def load_data(self,datasetpath):
         with_mask_path = None
