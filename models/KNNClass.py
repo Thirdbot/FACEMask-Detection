@@ -8,13 +8,12 @@ import joblib
 os.environ['LOKY_MAX_CPU_COUNT'] = '4'  # Set to number of cores you want to use
 
 class KNNClass:
-    def __init__(self):
-        self.n_neighbors = 15
-        
+    def __init__(self,config=None):
         self.train_data = None
         self.validate_data = None
         self.num_classes = 2
-    
+        self.config = config
+
     def __get_attribute__(self, item):
         return super(KNNClass, self).__getattribute__(item)
     
@@ -22,7 +21,7 @@ class KNNClass:
         return super(KNNClass, self).__setattr__(self, item, None)
     
     def model_create(self):
-        knn = KNeighborsClassifier(n_neighbors=self.n_neighbors)
+        knn = KNeighborsClassifier(**self.config)
         return knn
     
     def _adapter(self):
@@ -33,7 +32,7 @@ class KNNClass:
         x_test = x_test.reshape(x_test.shape[0],-1)
         return x_train,ytrain,x_test,ytest
     
-    def train(self,model,epochs=10):
+    def train(self,model):
         x_train,ytrain,x_test,ytest = self._adapter()
         print(f"x_train shape: {x_train.shape}, ytrain shape: {ytrain.shape}, x_test shape: {x_test.shape}, ytest shape: {ytest.shape}")
         model.fit(x_train,ytrain)

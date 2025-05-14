@@ -51,7 +51,7 @@ class Main:
     def __init__(self):
         self.size =128
         self.epoch = 10
-        self.dataset_loader = DatasetLoader(dataset_path,self.size)
+        self.dataset_loader = DatasetLoader(dataset_path=dataset_path,size=self.size,batch_size=32)
         self.train_data,self.validation_data = self.dataset_loader.get_train_test_data()
         self.model_loader = ModelLoader(self.train_data,
                                         self.validation_data,
@@ -59,18 +59,61 @@ class Main:
         
         self.model_list = ["KNNClass","DecisionClass","DeepLearning","RFC"]
         
+        
+        self.deeplearning_config = dict(
+            epochs=10,
+            batch_size=32,
+            validation_split=0.2,
+            shuffle=True,
+            # callbacks=[]
+            )
+        self.knn_config = dict(
+            n_neighbors=5,
+            weights="uniform",
+            algorithm="auto",
+            leaf_size=30,
+            p=2,
+            metric="minkowski",
+            )
+        self.decision_config = dict(
+            criterion="gini",
+            splitter="best",
+            max_depth=None,
+            min_samples_split=2,
+            min_samples_leaf=1,
+            max_features="sqrt",
+            )
+        self.rfc_config = dict(
+            n_estimators=100,
+            max_depth=None,
+            criterion="gini",
+            min_samples_split=2,
+            min_samples_leaf=1,
+            max_features="sqrt",
+            )
+            
+        self.config = {"DeepLearning":self.deeplearning_config,
+                       "KNNClass":self.knn_config,
+                       "DecisionClass":self.decision_config,
+                       "RFC":self.rfc_config
+                       }
+        
+        
     def create_model(self,model_name):
+        self.model_loader.config = self.config[model_name]
+        #select model from lib and model_name
         model_func = self.model_loader.select(model_name)
-        self.model = self.model_loader.create_model(model_func)
+        #call model instance and pass config as create model
+        self.model = self.model_loader.create_model(model_func,self.config[model_name])
     
     def train_all(self):
         for model_name in self.model_list:
             self.create_model(model_name)
-            self.model_loader.train(self.model,self.epoch)
+            self.model_loader.train(self.model)
             self.model_loader.save_model(self.model,model_name)
             
     def train(self,model_name):
-        self.model_loader.train(self.model,self.epoch)
+        self.model_loader.train(self.model)
         self.model_loader.save_model(self.model,model_name)
     
     
@@ -101,9 +144,9 @@ class Main:
 
 if __name__ == "__main__":
     main = Main()
-    main.create_model("DecisionClass")
+    # main.create_model("DecisionClass")
     main.train_all()
-    # main.train("DeepLearning")
+    # main.train("DecisionClass")
     print(main.evaluate_all())
     print(main.score_all())
 

@@ -20,10 +20,12 @@ class ModelLoader:
         self.validate_data = validation
         self.size = size
         self.initilize_class = None
-    def create_model(self,model_calling):
+        self.config = {}
+        
+    def create_model(self,model_calling,config=None):
         print(f"{self.selected} creating model")
         
-        self.initilize_class = self.runfunc(model_calling)
+        self.initilize_class = self.runfunc(model_calling,config)
         self.initilize_class.train_data = self.train_data
         self.initilize_class.validate_data = self.validate_data
         self.initilize_class.size = self.size
@@ -40,9 +42,10 @@ class ModelLoader:
         init_args_dict = func.__dict__.items()
         # print(f"init_args_dict: {init_args_dict}")
         return func
-    def train(self,model,epochs):
+    
+    def train(self,model):
         print(f"{self.selected} training")
-        self.initilize_class.train(model=model,epochs=epochs)
+        self.initilize_class.train(model=model)
     
     def save_model(self,model,file_name):
         joblib.dump(model,f"{self.save_folder}/{file_name}.h5")
@@ -59,9 +62,9 @@ class ModelLoader:
         print(f"{self.selected} scoring")
         return self.initilize_class.score(model)
     
-    def runfunc(self,func):
+    def runfunc(self,func,config=None):
         os.makedirs(self.save_folder,exist_ok=True)
-        return func()
+        return func(config)
     
     def import_function(self,model_func_selected,selected):
         mod = __import__(model_func_selected, fromlist=[selected])
