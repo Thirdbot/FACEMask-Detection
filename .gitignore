@@ -26,3 +26,4 @@ dist-ssr
 env
 save/
 __pycache__
+wandb/

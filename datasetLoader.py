@@ -21,15 +21,13 @@ class DatasetLoader:
         # Define transformations
         self.transform = transforms.Compose([
             transforms.Resize((self.size, self.size)),
-            # transforms.ToTensor(),
-            # transforms.Normalize(mean=[0.485, 0.456, 0.406], 
-            #                    std=[0.229, 0.224, 0.225])  # ImageNet normalization
+            transforms.ToTensor()
         ])
         
-        self.raw_data = ImageFolder(self.datasetpath,transform=self.transform)
+        self.raw_data= ImageFolder(self.datasetpath,transform=self.transform)
         
-        self.raw_train = DataLoader(self.raw_data,batch_size=self.batch_size,shuffle=True)
-        self.raw_val = DataLoader(self.raw_data,batch_size=self.batch_size,shuffle=True)
+        self.raw__data_loder = DataLoader(self.raw_data,batch_size=self.batch_size,shuffle=False)
+        # self.raw_val = DataLoader(self.raw_data,batch_size=self.batch_size,shuffle=True)
                 
         # Create data generators for training and validation preprocessed
         self.datagen = ImageDataGenerator(
@@ -70,28 +68,31 @@ class DatasetLoader:
         # self.dataloaderbatch = DataLoader(self.dataset,batch_size=self.batch_size,shuffle=True)
         
         # # Get all images and labels
-        # self.images = []
-        # self.labels = []
+       
+    def get_raw_train_test_data(self):
+        images = []
+        labels = []
         
-        # # Load all data
-        # for img,label in self.dataloaderbatch:
-        #     self.images.append(img)
-        #     self.labels.append(label)
-        
-        # # # Convert to numpy arrays
-        # # self.images = np.array(self.images)
-        # # self.labels = np.array(self.labels)
-        
-     
-        # # Split into train and test sets
-        # self.X_train, self.y_train, self.X_test, self.y_test = train_test_split(
-        #     self.images, 
-        #     self.labels,
-        #     train_size=self.train_ratio,
-        #     test_size=1-self.train_ratio,
-        #     random_state=42,
-        # )
-         
+        # Iterate through the dataloader
+        for batch_images, batch_labels in self.raw__data_loder:
+            # Extend the lists with individual images and labels from the batch
+            images.extend(batch_images)
+            labels.extend(batch_labels)
+
+        # Convert lists to tensors
+        images = torch.stack(images)
+        labels = torch.stack(labels)
+
+        # Split into train and test
+        x_train, x_test, y_train, y_test = train_test_split(
+            images, labels,
+            test_size=1-self.train_ratio,
+            random_state=42
+        )
+        # x_train, x_test, y_train, y_test = train_test_split(self.raw_data.imgs,self.raw_data.targets,test_size=1-self.train_ratio,random_state=42)
+        return (x_train, y_train), (x_test, y_test)
+            
+    
     def get_train_test_data(self):
         # Get all batches from generators
         train_batches = []
@@ -113,6 +114,28 @@ class DatasetLoader:
         x_test = np.concatenate([batch[0] for batch in val_batches])
         y_test = np.concatenate([batch[1] for batch in val_batches])
         
+        
+        #  self.images = []
+        # self.labels = []
+        
+        # # Load all data
+        # for img,label in self.dataloaderbatch:
+        #     self.images.append(img)
+        #     self.labels.append(label)
+        
+        # # # Convert to numpy arrays
+        # # self.images = np.array(self.images)
+        # # self.labels = np.array(self.labels)
+        
+     
+        # # Split into train and test sets
+        # self.X_train, self.y_train, self.X_test, self.y_test = train_test_split(
+        #     self.images, 
+        #     self.labels,
+        #     train_size=self.train_ratio,
+        #     test_size=1-self.train_ratio,
+        #     random_state=42,
+        # )
         return (x_train, y_train), (x_test, y_test)
     
     def load_data(self,datasetpath):

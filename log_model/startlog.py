@@ -1,4 +1,6 @@
 import wandb
+import numpy as np
+from PIL import Image
 
 config = dict(project="mask_detection", 
               name="mask_detection_v1",
@@ -36,8 +38,15 @@ class LogModel:
                                         "source":"local directory",
                                         "size":[len(dataset) for dataset in raw_dataset]
                                     })
-            #write data to artifact
+            # write data to artifact train,val
+            for name,dataset in zip(names,raw_dataset):
+                with raw_data.new_file(name+".npz",mode="wb") as f:
+                    #x,y of train/val
+                    np.savez(f,x=dataset[0],y=dataset[1])
+                
+                    
             run.log_artifact(raw_data)
+            
     def preprocessed_data_and_log(self,preprocessed_dataset,step):
         self.preprocessed_dataset = preprocessed_dataset
         #set up artifact
@@ -48,6 +57,9 @@ class LogModel:
                                   metadata=step)
             #declare use raw artifact
             run.use_artifact('raw_dataset:latest')
+            for name,dataset in zip(names,preprocessed_dataset):
+                with processed_data.new_file(name+".npz",mode="wb") as f:
+                    np.savez(f,x=dataset[0],y=dataset[1])
             #write data to artifact
             run.log_artifact(processed_data)
             
