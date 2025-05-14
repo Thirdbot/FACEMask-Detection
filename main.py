@@ -61,9 +61,11 @@ class Main:
         
         self.train_data,self.validation_data = self.dataset_loader.get_train_test_data()
         
-        self.log_model.raw_data_and_log(raw_dataset=(self.dataset_loader.raw_train,self.dataset_loader.raw_val))
+        self.raw_train,self.raw_val = self.dataset_loader.get_raw_train_test_data()
         
-        self.log_model.preprocessed_data_and_log(preprocessed_dataset=(self.dataset_loader.train_generator,self.dataset_loader.validation_generator),step=self.dataset_loader.step)
+        self.log_model.raw_data_and_log(raw_dataset=(self.raw_train,self.raw_val))
+        
+        self.log_model.preprocessed_data_and_log(preprocessed_dataset=(self.train_data,self.validation_data),step=self.dataset_loader.step)
         
         self.model_loader = ModelLoader(self.train_data,
                                         self.validation_data,
