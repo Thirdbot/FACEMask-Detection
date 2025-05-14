@@ -17,7 +17,7 @@ lock = Lock()  # ป้องกัน predict ซ้อนกัน
 # ตรวจแมส
 def detect_mask(frame):
     try:
-        img = cv2.resize(frame, (224, 224))
+        img = cv2.resize(frame, (128,  128))
         img = img / 255.0
         img = np.expand_dims(img, axis=0)
         prediction = model.predict(img, verbose=0)
