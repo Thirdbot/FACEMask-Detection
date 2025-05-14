@@ -33,7 +33,7 @@ def real_time_mask_detection():
             # Extract and preprocess each face
             face = frame[y:y+h, x:x+w]
             try:
-                resized_face = cv2.resize(face, (224, 224))
+                resized_face = cv2.resize(face, (128, 128))  
                 normalized_face = resized_face / 255.0
                 input_face = np.expand_dims(normalized_face, axis=0)
 

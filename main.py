@@ -6,6 +6,7 @@ from tensorflow.keras.applications import MobileNetV2
 from tensorflow.keras.layers import Dense, Dropout, GlobalAveragePooling2D
 from tensorflow.keras.utils import to_categorical
 from sklearn.model_selection import train_test_split
+from tensorflow.keras.preprocessing.image import ImageDataGenerator  
 
 # Load dataset
 data_dir = "cleaned_dataset\data"
@@ -29,7 +30,7 @@ for category in categories:
         img_path = os.path.join(path, img_name)
         try:
             img = cv2.imread(img_path)
-            img = cv2.resize(img, (224, 224))  
+            img = cv2.resize(img, (128, 128)) 
             data.append(img)
             labels.append(label)
         except Exception as e:
@@ -43,8 +44,23 @@ labels = to_categorical(labels, num_classes=2)  # One-hot encode labels
 # Split dataset
 X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size=0.2, random_state=42)
 
+# Data augmentation
+train_datagen = ImageDataGenerator(
+    rotation_range=20,
+    width_shift_range=0.1,
+    height_shift_range=0.1,
+    shear_range=0.1,
+    zoom_range=0.1,
+    horizontal_flip=True,
+    fill_mode='nearest'
+)
+val_datagen = ImageDataGenerator()  
+
+train_generator = train_datagen.flow(X_train, y_train, batch_size=32)
+val_generator = val_datagen.flow(X_test, y_test, batch_size=32)
+
 # Define CNN model using transfer learning
-base_model = MobileNetV2(weights="imagenet", include_top=False, input_shape=(224, 224, 3))
+base_model = MobileNetV2(weights="imagenet", include_top=False, input_shape=(128, 128, 3))  
 base_model.trainable = False  # Freeze base model layers
 
 model = Sequential([
@@ -58,7 +74,13 @@ model = Sequential([
 model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
 # Train the model
-model.fit(X_train, y_train, epochs=10, validation_data=(X_test, y_test), batch_size=32)
+model.fit(
+    train_generator,
+    epochs=10,
+    validation_data=val_generator,
+    steps_per_epoch=len(X_train) // 32,
+    validation_steps=len(X_test) // 32
+)
 
 # Save the trained model
 model.save("mask_detector_model.h5")
@@ -86,7 +108,7 @@ def preprocess_faces(image, faces):
     face_images = []
     for (x, y, w, h) in faces:
         face = image[y:y+h, x:x+w]
-        face = cv2.resize(face, (224, 224))
+        face = cv2.resize(face, (128, 128)) 
         face = face / 255.0
         face_images.append(np.expand_dims(face, axis=0))
     return face_images
@@ -122,7 +144,7 @@ def predict_faces(image_path):
 
 # Test on real-world images
 if __name__ == "__main__":
-    test_images = ["pictureface/jojo1.jpg", "pictureface/jojo2.jpg"]  # Replace with your image paths
+    test_images = ["pictureface/jojo1.jpg", "pictureface/jojo2.jpg"]  
     for img_path in test_images:
         print(f"Testing image: {img_path}")
         predict_faces(img_path)
