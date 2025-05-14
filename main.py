@@ -50,6 +50,7 @@ dataset_path = Home_dir / "cleaned_dataset" / "data"
 class Main:
     def __init__(self):
         self.size =128
+        self.epoch = 10
         self.dataset_loader = DatasetLoader(dataset_path,self.size)
         self.train_data,self.validation_data = self.dataset_loader.get_train_test_data()
         self.model_loader = ModelLoader(self.train_data,
@@ -65,11 +66,11 @@ class Main:
     def train_all(self):
         for model_name in self.model_list:
             self.create_model(model_name)
-            self.model_loader.train(self.model,1)
+            self.model_loader.train(self.model,self.epoch)
             self.model_loader.save_model(self.model,model_name)
             
     def train(self,model_name):
-        self.model_loader.train(self.model,1)
+        self.model_loader.train(self.model,self.epoch)
         self.model_loader.save_model(self.model,model_name)
     
     
@@ -101,7 +102,7 @@ class Main:
 if __name__ == "__main__":
     main = Main()
     main.create_model("DecisionClass")
-    # main.train_all()
+    main.train_all()
     # main.train("DeepLearning")
     print(main.evaluate_all())
     print(main.score_all())
