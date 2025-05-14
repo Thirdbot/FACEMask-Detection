@@ -7,11 +7,12 @@ from tensorflow.keras.layers import Flatten, Dense, Dropout, Conv2D, MaxPooling2
 from sklearn.metrics import precision_score, recall_score, log_loss, accuracy_score
 import torch
 class DeepLearning:
-    def __init__(self):        
+    def __init__(self,config=None):        
         self.size = None
         self.train_data = None
         self.validate_data = None
         self.num_classes = 2
+        self.config = config
         
     def __get_attribute__(self, item):
         return super(DeepLearning, self).__getattribute__(item)
@@ -20,6 +21,7 @@ class DeepLearning:
         return super(DeepLearning, self).__setattr__(self, item, None)
     
     def model_create(self):
+        
         # สร้าง object ของ model
         model = Sequential()
 
@@ -72,12 +74,13 @@ class DeepLearning:
         x_train,y_train = self.train_data[0],self.train_data[1]
         x_test,y_test = self.validate_data[0],self.validate_data[1]
         return x_train, y_train, x_test, y_test
-    def train(self,model,epochs=10):
+    def train(self,model):
+        print(f"config: {self.config}")
         xtrain,ytrain,x_test,ytest = self._adapter()
         print(f"print shape of train data: {xtrain.shape,ytrain.shape}")
         model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
         print(f"model compiled")
-        model.fit(xtrain,ytrain, epochs=epochs)
+        model.fit(xtrain,ytrain,**self.config)
         return model
         # print(f"model saved to {self.save_path}")
         # model.save(self.save_path)
