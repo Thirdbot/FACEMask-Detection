@@ -9,7 +9,7 @@ from sklearn.model_selection import train_test_split
 from tensorflow.keras.preprocessing.image import ImageDataGenerator  
 
 # Load dataset
-data_dir = "cleaned_dataset\data"
+data_dir = "cleaned_dataset/data"
 categories = ["with_mask", "without_mask"]
 data = []
 labels = []

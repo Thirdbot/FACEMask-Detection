@@ -19,6 +19,7 @@ import { mediaStramConstraints } from "../constants";
 const FaceMaskDetection = () => {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isAlertShown, setIsAlertShown] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
   const videoRef = useRef();
   const pcRef = useRef(null);
   const localStreamRef = useRef(null);
@@ -31,6 +32,7 @@ const FaceMaskDetection = () => {
 
   const handleOpenCamera = useCallback(async () => {
     setIsCameraOpen(true);
+    setErrorMsg("");
     try {
       const stream = await navigator.mediaDevices.getUserMedia(
         mediaStramConstraints
@@ -40,7 +42,7 @@ const FaceMaskDetection = () => {
       await handleStartConnection(stream);
     } catch (err) {
       if (err instanceof Error) {
-        console.error(err.message);
+        setErrorMsg("ไม่สามารถเข้าถึงกล้องได้: " + err.message);
         handleCloseConnection();
       }
     }
@@ -48,12 +50,14 @@ const FaceMaskDetection = () => {
 
   const handleCloseCamera = useCallback(() => {
     setIsCameraOpen(false);
-    handleAlertClose();
     handleCloseConnection();
+    // Do NOT call handleAlertClose here
   }, []);
 
   const handleAlertClose = useCallback(() => {
     setIsAlertShown(false);
+    setErrorMsg("");
+    // Do NOT call handleCloseCamera here
   }, []);
 
   const handleStartConnection = useCallback(async (stream) => {
@@ -114,7 +118,7 @@ const FaceMaskDetection = () => {
           autoHideDuration={3000}
           anchorOrigin={{ vertical: "top", horizontal: "right" }}
           onClose={handleAlertClose}
-          slot={<Slide direction="right" />}
+          TransitionComponent={Slide}
         >
           <Alert
             severity="info"
@@ -135,6 +139,25 @@ const FaceMaskDetection = () => {
               <span className="font-bold">แจ้งเตือน</span>
             </AlertTitle>
             คุณกำลังเปิดกล้องอยู่
+          </Alert>
+        </Snackbar>
+        <Snackbar
+          open={!!errorMsg}
+          autoHideDuration={4000}
+          anchorOrigin={{ vertical: "top", horizontal: "right" }}
+          onClose={handleAlertClose}
+          TransitionComponent={Slide}
+        >
+          <Alert
+            severity="error"
+            variant="filled"
+            onClose={handleAlertClose}
+            className="absolute top-4 right-4 w-80 z-10"
+          >
+            <AlertTitle>
+              <span className="font-bold">เกิดข้อผิดพลาด</span>
+            </AlertTitle>
+            {errorMsg}
           </Alert>
         </Snackbar>
         <div className="w-9/12 relative">
