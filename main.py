@@ -32,6 +32,7 @@ import random
 import shutil
 import torch
 from modelLoader import ModelLoader
+from log_model.startlog import LogModel
 
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
@@ -51,8 +52,19 @@ class Main:
     def __init__(self):
         self.size =128
         self.epoch = 10
-        self.dataset_loader = DatasetLoader(dataset_path=dataset_path,size=self.size,batch_size=32)
+        
+        self.dataset_loader = DatasetLoader(dataset_path=dataset_path,
+                                            size=self.size,
+                                            batch_size=32)
+        
+        self.log_model = LogModel(dataset_config=self.dataset_loader.sub_name)
+        
         self.train_data,self.validation_data = self.dataset_loader.get_train_test_data()
+        
+        self.log_model.raw_data_and_log(raw_dataset=(self.dataset_loader.raw_train,self.dataset_loader.raw_val))
+        
+        self.log_model.preprocessed_data_and_log(preprocessed_dataset=(self.dataset_loader.train_generator,self.dataset_loader.validation_generator),step=self.dataset_loader.step)
+        
         self.model_loader = ModelLoader(self.train_data,
                                         self.validation_data,
                                         self.size)
