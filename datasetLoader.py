@@ -5,6 +5,7 @@ import numpy as np
 import torch
 from torchvision import datasets, transforms
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from torchvision.datasets import ImageFolder
 from torch.utils.data import DataLoader, random_split
 from sklearn.model_selection import train_test_split
 import tensorflow as tf
@@ -15,17 +16,23 @@ class DatasetLoader:
         self.size = size
         self.batch_size = batch_size
         self.train_ratio = 0.8
+        self.sub_name = ['training','validation']
         
         # Define transformations
         self.transform = transforms.Compose([
             transforms.Resize((self.size, self.size)),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], 
-                               std=[0.229, 0.224, 0.225])  # ImageNet normalization
+            # transforms.ToTensor(),
+            # transforms.Normalize(mean=[0.485, 0.456, 0.406], 
+            #                    std=[0.229, 0.224, 0.225])  # ImageNet normalization
         ])
+        
+        self.raw_data = ImageFolder(self.datasetpath,transform=self.transform)
+        
+        self.raw_train = DataLoader(self.raw_data,batch_size=self.batch_size,shuffle=True)
+        self.raw_val = DataLoader(self.raw_data,batch_size=self.batch_size,shuffle=True)
                 
-        # Create data generators for training and validation
-        datagen = ImageDataGenerator(
+        # Create data generators for training and validation preprocessed
+        self.datagen = ImageDataGenerator(
             rescale=1./255,
             validation_split=0.2,
             rotation_range=20,
@@ -34,24 +41,26 @@ class DatasetLoader:
             horizontal_flip=True,
             fill_mode='nearest'
         )
+        
+        self.step = {"horizontal_flip":True}
 
         # Create training and validation generators
-        self.train_generator = datagen.flow_from_directory(
+        self.train_generator = self.datagen.flow_from_directory(
             self.datasetpath,
             target_size=(self.size, self.size),
             batch_size=self.batch_size,
             class_mode='categorical',
-            subset='training',
+            subset=self.sub_name[0],
             shuffle=True,
     
         )
 
-        self.validation_generator = datagen.flow_from_directory(
+        self.validation_generator = self.datagen.flow_from_directory(
             self.datasetpath,
             target_size=(self.size, self.size),
             batch_size=self.batch_size,
             class_mode='categorical',
-            subset='validation',
+            subset=self.sub_name[1],
             shuffle=True
         )
         
