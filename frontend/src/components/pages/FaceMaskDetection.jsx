@@ -4,6 +4,7 @@ import { Button, ButtonGroup } from "@mui/material";
 import VideocamIcon from "@mui/icons-material/Videocam";
 import VideocamOffIcon from "@mui/icons-material/VideocamOff";
 import CameraAltRoundedIcon from "@mui/icons-material/CameraAltRounded";
+import Stack from "@mui/material/Stack";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 import AlertTitle from "@mui/material/AlertTitle";
@@ -14,33 +15,35 @@ import AppContainer from "../containers/AppContainer";
 import Sidebar from "../ui/Sidebar";
 import PageContent from "../containers/PageContent";
 import Title from "../ui/Title";
-import { mediaStramConstraints } from "../constants";
+import { mediaStreamConstraints } from "../constants";
 
 const FaceMaskDetection = () => {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [isAlertShown, setIsAlertShown] = useState(false);
+  const [isCameraAlertShown, setIsCameraAlertShown] = useState(false);
+  const [isErrorAlertShown, setIsErrorAlertShown] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
   const videoRef = useRef();
   const pcRef = useRef(null);
   const localStreamRef = useRef(null);
 
   useEffect(() => {
-    if (isCameraOpen) {
-      setIsAlertShown(true);
-    }
+    setIsCameraAlertShown(isCameraOpen);
   }, [isCameraOpen]);
 
   const handleOpenCamera = useCallback(async () => {
     setIsCameraOpen(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia(
-        mediaStramConstraints
+        mediaStreamConstraints
       );
+      
       videoRef.current.srcObject = stream;
       localStreamRef.current = stream;
       await handleStartConnection(stream);
     } catch (err) {
       if (err instanceof Error) {
-        console.error(err.message);
+        handleCloseCamera();
+        handleShowErrorAlert(err.message);
         handleCloseConnection();
       }
     }
@@ -48,12 +51,20 @@ const FaceMaskDetection = () => {
 
   const handleCloseCamera = useCallback(() => {
     setIsCameraOpen(false);
-    handleAlertClose();
     handleCloseConnection();
   }, []);
 
-  const handleAlertClose = useCallback(() => {
-    setIsAlertShown(false);
+  const handleCloseCameraAlert = useCallback(() => {
+    setIsCameraAlertShown(false);
+  }, []);
+
+  const handleShowErrorAlert = useCallback((message) => {
+    setErrorMessage(message);
+    setIsErrorAlertShown(true);
+  }, []);
+
+  const handleCloseErrorAlert = useCallback(() => {
+    setIsErrorAlertShown(false);
   }, []);
 
   const handleStartConnection = useCallback(async (stream) => {
@@ -109,34 +120,63 @@ const FaceMaskDetection = () => {
       <Sidebar />
       <PageContent className={"flex flex-col items-center justify-center"}>
         <Title text="ตรวจสอบใบหน้า" />
-        <Snackbar
-          open={isAlertShown}
-          autoHideDuration={3000}
-          anchorOrigin={{ vertical: "top", horizontal: "right" }}
-          onClose={handleAlertClose}
-          slot={<Slide direction="right" />}
-        >
-          <Alert
-            severity="info"
-            variant="standard"
-            className="absolute top-4 right-4 w-80 z-10"
-            action={
-              <IconButton
-                color="inherit"
-                size="small"
-                aria-label="close"
-                onClick={handleAlertClose}
-              >
-                <CloseRoundedIcon fontSize="inherit" />
-              </IconButton>
-            }
+        <Stack spacing={12}>
+          <Snackbar
+            open={isCameraAlertShown}
+            autoHideDuration={3000}
+            anchorOrigin={{ vertical: "top", horizontal: "right" }}
+            onClose={handleCloseCameraAlert}
+            slot={<Slide direction="right" />}
           >
-            <AlertTitle>
-              <span className="font-bold">แจ้งเตือน</span>
-            </AlertTitle>
-            คุณกำลังเปิดกล้องอยู่
-          </Alert>
-        </Snackbar>
+            <Alert
+              severity="info"
+              variant="standard"
+              className="absolute top-4 right-4 w-80 z-10"
+              action={
+                <IconButton
+                  color="inherit"
+                  size="small"
+                  aria-label="close"
+                  onClick={handleCloseCameraAlert}
+                >
+                  <CloseRoundedIcon fontSize="inherit" />
+                </IconButton>
+              }
+            >
+              <AlertTitle>
+                <span className="font-bold">แจ้งเตือน</span>
+              </AlertTitle>
+              คุณกำลังเปิดกล้องอยู่
+            </Alert>
+          </Snackbar>
+          <Snackbar
+            open={isErrorAlertShown}
+            anchorOrigin={{ vertical: "top", horizontal: "right" }}
+            onClose={handleCloseErrorAlert}
+            slot={<Slide direction="right" />}
+          >
+            <Alert
+              severity="error"
+              variant="standard"
+              className="absolute top-4 right-4 w-80 z-10"
+              action={
+                <IconButton
+                  color="inherit"
+                  size="small"
+                  aria-label="close"
+                  onClick={handleCloseErrorAlert}
+                >
+                  <CloseRoundedIcon fontSize="inherit" />
+                </IconButton>
+              }
+            >
+              <AlertTitle>
+                <span className="font-bold">เกิดข้อผิดพลาดขึ้น</span>
+              </AlertTitle>
+              {errorMessage}
+            </Alert>
+          </Snackbar>
+        </Stack>
         <div className="w-9/12 relative">
           <CameraAltRoundedIcon
             className="text-white/40 z-10 absolute top-1/2 left-1/2 -translate-1/2"

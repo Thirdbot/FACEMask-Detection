@@ -66,6 +66,7 @@ const Settings = () => {
               labelId="select-model"
               id="select-model"
               label="Model"
+              disabled
               defaultValue={"Deep Learning (CNN)"}
             >
               {modelNames.map((name) => (

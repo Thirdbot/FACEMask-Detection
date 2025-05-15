@@ -2,7 +2,10 @@ import AppContainer from "../containers/AppContainer";
 import Sidebar from "../ui/Sidebar";
 import PageContent from "../containers/PageContent";
 import Tooltip from "@mui/material/Tooltip";
+import CodeRoundedIcon from "@mui/icons-material/CodeRounded";
+import InsertLinkRoundedIcon from "@mui/icons-material/InsertLinkRounded";
 import Title from "../ui/Title";
+import HorizontalLine from "../ui/HorizontalLine";
 
 const ProjectDescription = () => {
   return (
@@ -26,20 +29,22 @@ const ProjectDescription = () => {
             ระบบสามารถตรวจจับใบหน้าที่มีการสวมหน้ากาก และไม่มีการสวมหน้ากาก
             ได้อย่างแม่นยำ
             พร้อมแสดงผลลัพธ์กลับมายังผู้ใช้งานผ่านหน้าเว็บแบบทันที
-            ซึ่งสามารถนำไปประยุกต์ใช้ในสถานการณ์จริงได้หลากหลาย เช่น:
-            การควบคุมทางเข้าออกของอาคารหรือสถานที่สาธารณะ
-            การช่วยเหลือเจ้าหน้าที่รักษาความปลอดภัย
-            การใช้งานในห้องเรียนหรือห้องประชุมเพื่อให้แน่ใจว่ามีการปฏิบัติตามมาตรการป้องกันโรค
           </p>
-          <div className="mt-4 mb-2">
-            <h3 className="text-lg font-bold">Tech Stack</h3>
+          <HorizontalLine />
+          <div className="mt-6 mb-2">
+            <h3 className="text-lg font-bold mb-2">
+              <CodeRoundedIcon className="me-1" /> Tech Stack
+            </h3>
             <p>Frontend: React, React-Router, Tailwind CSS, MUI, WebRTC API</p>
             <p>Backend: aiohttp, aiortc</p>
             <p>AI: Tensorflow, keras, Deep Learning (CNN)</p>
             <p>Deploy: -</p>
           </div>
-          <div className="mt-4 mb-2">
-            <h3 className="text-lg font-bold">ลิ้งค์อื่นๆ</h3>
+          <div className="mt-6 mb-2">
+            <h3 className="text-lg font-bold mb-2">
+              <InsertLinkRoundedIcon className="me-1"/>
+              ลิ้งค์อื่นๆ
+            </h3>
             <p>
               Source Code:{" "}
               <Tooltip

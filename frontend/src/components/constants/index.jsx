@@ -52,7 +52,7 @@ export const membersData = [
   {
     name: "นาย พันธุ์ธัช สุวรรณวัฒนะ",
     studentId: 6630250281,
-    responsibility: "จัดการและทำความสะอาดข้อมูล Dataset",
+    responsibility: "จัดการและทำความสะอาดข้อมูล Dataset และ สร้าง AI Model",
   },
   {
     name: "นาย ปุณณภพ มีฤทธิ์",
@@ -67,7 +67,7 @@ export const membersData = [
   {
     name: "นางสาว อัมพุชินิ บุญรักษ์",
     studentId: 6630250532,
-    responsibility: null,
+    responsibility: "Backend",
   },
 ];
 
@@ -78,7 +78,7 @@ export const modelNames = [
   "Random Forest",
 ];
 
-export const mediaStramConstraints = {
+export const mediaStreamConstraints = {
   video: {
     width: { min: 1280, ideal: 1920, max: 2560 },
     height: { min: 720, ideal: 1080, max: 1440 },
