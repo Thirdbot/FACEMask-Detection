@@ -148,6 +148,7 @@ const FaceMaskDetection = () => {
           <video
             autoPlay
             playsInline
+            muted
             ref={videoRef}
             className="bg-gradient-to-b from-neutral-950 via-neutral-900 bg-neutral-800 rounded-3xl w-full h-[450px] object-cover shadow-3xl border-8 border-black/80 box-border"
           />
