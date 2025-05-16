@@ -11,7 +11,7 @@ import base64
 import io
 
 # Load model
-model = load_model("./backend/models/mask_detector_model.h5")
+model = load_model("./models/mask_detector_model.h5")
 pcs = set()
 lock = Lock()
 
