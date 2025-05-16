@@ -22,9 +22,15 @@ const FaceMaskDetection = () => {
   const [isCameraAlertShown, setIsCameraAlertShown] = useState(false);
   const [isErrorAlertShown, setIsErrorAlertShown] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [detectionResult, setDetectionResult] = useState("");
+  const [isDetecting, setIsDetecting] = useState(false);
+  const [faces, setFaces] = useState([]);
+  const prevBoxesRef = useRef([]);
   const videoRef = useRef();
-  const pcRef = useRef(null);
   const localStreamRef = useRef(null);
+  const canvasRef = useRef();
+  const intervalRef = useRef(null);
 
   useEffect(() => {
     setIsCameraAlertShown(isCameraOpen);
@@ -32,6 +38,7 @@ const FaceMaskDetection = () => {
 
   const handleOpenCamera = useCallback(async () => {
     setIsCameraOpen(true);
+    setErrorMsg("");
     try {
       const stream = await navigator.mediaDevices.getUserMedia(
         mediaStreamConstraints
@@ -115,6 +122,126 @@ const FaceMaskDetection = () => {
     }
   }, []);
 
+  const handleAlertClose = useCallback(() => {
+    setIsAlertShown(false);
+    setErrorMsg("");
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      // Cleanup on unmount
+      if (videoRef.current && videoRef.current.srcObject) {
+        videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
+      }
+      if (localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, []);
+
+  // Real-time detection effect (faster interval)
+  useEffect(() => {
+    if (isCameraOpen) {
+      intervalRef.current = setInterval(async () => {
+        if (!videoRef.current) return;
+        // Draw current frame to canvas
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        if (!canvas || video.videoWidth === 0 || video.videoHeight === 0) return;
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        // Get image as base64
+        const dataUrl = canvas.toDataURL("image/jpeg");
+        try {
+          setIsDetecting(true);
+          const { data } = await axios.post("http://localhost:8080/detect", {
+            image: dataUrl,
+          });
+          setFaces(data.results || []);
+        } catch (err) {
+          setFaces([{ box: null, label: "Error", confidence: 0 }]);
+          setErrorMsg("Network Error");
+        } finally {
+          setIsDetecting(false);
+        }
+      }, 200);
+    } else {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      setFaces([]);
+      prevBoxesRef.current = [];
+    }
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [isCameraOpen]);
+
+  // Smooth box animation using requestAnimationFrame
+  useEffect(() => {
+    let animFrame;
+    const overlay = document.getElementById("overlay-canvas");
+    const video = videoRef.current;
+    if (!overlay || !video) return;
+    const ctx = overlay.getContext("2d");
+    overlay.width = video.videoWidth;
+    overlay.height = video.videoHeight;
+
+    // Helper: linear interpolation
+    function lerp(a, b, t) {
+      return a + (b - a) * t;
+    }
+
+    // Animate boxes
+    function animateBoxes() {
+      ctx.clearRect(0, 0, overlay.width, overlay.height);
+      if (!faces || !video.videoWidth || !video.videoHeight) return;
+
+      // Prepare previous and current boxes
+      let prevBoxes = prevBoxesRef.current;
+      let currBoxes = faces.map(f => f.box);
+
+      // Interpolate positions
+      let smoothBoxes = faces.map((face, i) => {
+        if (!face.box) return null;
+        let prev = prevBoxes && prevBoxes[i] ? prevBoxes[i] : face.box;
+        // Lerp each coordinate
+        return prev.map((v, idx) => lerp(v, face.box[idx], 0.1));
+      });
+
+      // Draw
+      faces.forEach((face, i) => {
+        if (face.box && smoothBoxes[i]) {
+          const [x, y, w, h] = smoothBoxes[i];
+          ctx.lineWidth = 4;
+          ctx.strokeStyle = face.label === "Wearing Mask" ? "#22c55e" : "#ef4444";
+          ctx.strokeRect(x, y, w, h);
+          ctx.font = "20px Arial";
+          ctx.fillStyle = face.label === "Wearing Mask" ? "#22c55e" : "#ef4444";
+          // Show label and confidence
+          const conf = face.confidence !== undefined ? ` (${(face.confidence * 100).toFixed(1)}%)` : "";
+          ctx.fillText(face.label + conf, x, y - 10);
+        }
+      });
+
+      // Save for next frame
+      prevBoxesRef.current = faces.map(f => f.box);
+
+      animFrame = requestAnimationFrame(animateBoxes);
+    }
+
+    animateBoxes();
+    return () => {
+      if (animFrame) cancelAnimationFrame(animFrame);
+    };
+  }, [faces, isCameraOpen]);
+
   return (
     <AppContainer>
       <Sidebar />
@@ -188,10 +315,22 @@ const FaceMaskDetection = () => {
           <video
             autoPlay
             playsInline
-            muted
             ref={videoRef}
             className="bg-gradient-to-b from-neutral-950 via-neutral-900 bg-neutral-800 rounded-3xl w-full h-[450px] object-cover shadow-3xl border-8 border-black/80 box-border"
           />
+          {/* Hidden canvas for capturing frame */}
+          <canvas ref={canvasRef} style={{ display: "none" }} />
+          {/* Overlay canvas for drawing rectangles */}
+          <canvas
+            id="overlay-canvas"
+            className="absolute top-0 left-0 w-full h-full pointer-events-none"
+          />
+          {/* Show detection result for no face or error */}
+          {faces.length === 1 && faces[0].label && !faces[0].box && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/80 text-white px-6 py-2 rounded-xl text-xl font-bold z-20">
+              {faces[0].label}
+            </div>
+          )}
         </div>
         <ButtonGroup
           className="mt-6 w-full flex items-center justify-evenly"
