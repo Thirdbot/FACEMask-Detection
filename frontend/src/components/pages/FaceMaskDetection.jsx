@@ -26,7 +26,6 @@ const FaceMaskDetection = () => {
   const [faces, setFaces] = useState([]);
   const prevBoxesRef = useRef([]);
   const videoRef = useRef();
-  const localStreamRef = useRef(null);
   const canvasRef = useRef();
   const intervalRef = useRef(null);
   const overlayRef = useRef();
@@ -35,32 +34,7 @@ const FaceMaskDetection = () => {
     setIsCameraAlertShown(isCameraOpen);
 
     if (isCameraOpen) {
-      intervalRef.current = setInterval(async () => {
-        if (!videoRef.current) return;
-        // Draw current frame to canvas
-        const video = videoRef.current;
-        const canvas = canvasRef.current;
-        if (!canvas || video.videoWidth === 0 || video.videoHeight === 0)
-          return;
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        // Get image as base64
-        const dataUrl = canvas.toDataURL("image/jpeg");
-        try {
-          setIsDetecting(true);
-          const { data } = await axios.post("http://localhost:8080/detect", {
-            image: dataUrl,
-          });
-          setFaces(data.results || []);
-        } catch (err) {
-          setFaces([{ box: null, label: "Error", confidence: 0 }]);
-          setErrorMsg("Network Error");
-        } finally {
-          setIsDetecting(false);
-        }
-      }, 100);
+      handleDetectFaceMask();
     } else {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -69,6 +43,7 @@ const FaceMaskDetection = () => {
       setFaces([]);
       prevBoxesRef.current = [];
     }
+
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -157,7 +132,6 @@ const FaceMaskDetection = () => {
         mediaStreamConstraints
       );
       videoRef.current.srcObject = stream;
-      localStreamRef.current = stream;
     } catch (err) {
       if (err instanceof Error) {
         handleShowErrorAlert(err.message);
@@ -166,17 +140,43 @@ const FaceMaskDetection = () => {
     }
   }, []);
 
+  const handleDetectFaceMask = useCallback(() => {
+    intervalRef.current = setInterval(async () => {
+      // if (!videoRef.current) return;
+      // Draw current frame to canvas
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      // if (!canvas || video.videoWidth === 0 || video.videoHeight === 0) return;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const image = canvas.toDataURL("image/jpeg");
+
+      setIsDetecting(true);
+      try {
+        const { data } = await axios.post("http://localhost:8080/detect", {
+          image,
+        });
+        setFaces(data.results || []);
+      } catch (err) {
+        if (err instanceof Error) {
+          setFaces([{ box: null, label: "Error", confidence: 0 }]);
+          handleCloseCamera();
+          handleShowErrorAlert(err.message);
+        }
+      } finally {
+        setIsDetecting(false);
+      }
+    }, 200);
+  }, []);
+
   const handleCloseCamera = useCallback(() => {
     setIsCameraOpen(false);
 
     if (videoRef.current && videoRef.current.srcObject) {
       videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
       videoRef.current.srcObject = null;
-    }
-
-    if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach((track) => track.stop());
-      localStreamRef.current = null;
     }
   }, []);
 
@@ -274,14 +274,17 @@ const FaceMaskDetection = () => {
           {/* Overlay canvas for drawing rectangles */}
           <canvas
             ref={overlayRef}
-            id="overlay-canvas"
             className="absolute top-0 left-0 w-full h-full pointer-events-none"
           />
-          {/* Show detection result for no face or error */}
-          {faces.length === 1 && faces[0].label && !faces[0].box && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/80 text-white px-6 py-2 rounded-xl text-xl font-bold z-20">
-              {faces[0].label}
+          {faces.length === 1 &&
+          faces[0].label &&
+          !faces[0].box &&
+          isCameraOpen ? (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-slate-50 px-6 py-2 rounded-xl text-xl font-bold z-20 select-none tracking-wide">
+              {isDetecting ? "กำลังตรวจสอบใบหน้า ..." : faces[0].label}
             </div>
+          ) : (
+            <></>
           )}
         </div>
         <ButtonGroup

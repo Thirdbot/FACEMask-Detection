@@ -62,7 +62,7 @@ export const membersData = [
   {
     name: "นาย วรินทร์ สายปัญญา",
     studentId: 6630250435,
-    responsibility: "Frontend และ UX/UI Design",
+    responsibility: "Frontend",
   },
   {
     name: "นางสาว อัมพุชินิ บุญรักษ์",
@@ -73,8 +73,6 @@ export const membersData = [
 
 export const modelNames = [
   "Deep Learning (CNN)",
-  "K-Nearest Neighbors",
-  "Random Forest",
 ];
 
 export const mediaStreamConstraints = {

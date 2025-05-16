@@ -36,7 +36,7 @@ const ProjectDescription = () => {
               <CodeRoundedIcon className="me-1" /> Tech Stack
             </h3>
             <p>Frontend: React, React-Router, Tailwind CSS, MUI, WebRTC API</p>
-            <p>Backend: aiohttp, aiortc</p>
+            <p>Backend: aiohttp</p>
             <p>AI: Tensorflow, keras, Deep Learning (CNN)</p>
             <p>Deploy: -</p>
           </div>
