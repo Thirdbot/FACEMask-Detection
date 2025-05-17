@@ -78,7 +78,7 @@ export const modelNames = [
   "Random Forest",
 ];
 
-export const mediaStramConstraints = {
+export const mediaStreamConstraints = {
   video: {
     width: { min: 1280, ideal: 1920, max: 2560 },
     height: { min: 720, ideal: 1080, max: 1440 },

@@ -1,13 +1,17 @@
+from flask import Flask, jsonify, request
+from flask_cors import cross_origin
+from tensorflow.keras.models import load_model # type: ignore
+import base64
 import cv2
 import numpy as np
-from flask import Flask
-from tensorflow.keras.models import load_model
-import base64
 
+path = "./models/mask_detector_model.h5"
 # Load model
-model = load_model("./models/mask_detector_model.h5")
+model = load_model(path)
 
-# Load Haar cascade for face detection
+origin = "http://localhost:5173"
+
+# # Load Haar cascade for face detection
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 categories = ["with_mask", "without_mask"]
 
@@ -41,3 +45,29 @@ def detect_mask_multi(frame):
     except Exception as e:
         print("Prediction error:", e)
         return [{"box": None, "label": "Error", "confidence": 0.0}]
+
+app = Flask(__name__)
+
+@app.get("/")
+def index():
+    return "Hello World!"
+
+
+@app.post("/api/mask-detection")
+@cross_origin(origin=origin, methods="POST", allow_headers="Content-Type")
+def predict():
+    try:
+        data = request.get_json()
+        img_data = data["image"]
+        
+        if "," in img_data:
+            img_data = img_data.split(",")[1]
+            
+        img_bytes = base64.b64decode(img_data)
+        img_array = np.frombuffer(img_bytes, np.uint8)
+        frame = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+        results = detect_mask_multi(frame)
+        return jsonify({ "results": results })
+    except Exception as err:
+        print(err)
+        return jsonify({ "results": [{"box": None, "label": "Error", "confidence": 0.0}] })
