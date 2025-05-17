@@ -5,6 +5,8 @@ from models.RFC import RFC
 import os
 from pathlib import Path
 import joblib
+
+from wandb.integration.keras import WandbMetricsLogger
 class ModelLoader:
     def __init__(self,train,validation,size) -> None:
         self.model_function = {
@@ -45,11 +47,14 @@ class ModelLoader:
     
     def train(self,model):
         print(f"{self.selected} training")
+        if self.selected == "DeepLearning":
+            self.initilize_class.callback = WandbMetricsLogger(log_freq="epoch")
         self.initilize_class.train(model=model)
     
     def save_model(self,model,file_name):
         joblib.dump(model,f"{self.save_folder}/{file_name}.h5")
         print(f"model saved to {self.save_folder}/{file_name}.h5")
+        return f"{self.save_folder}/{file_name}.h5"
         
     def load_model(self,file_name):
         return joblib.load(f"{self.save_folder}/{file_name}.h5")

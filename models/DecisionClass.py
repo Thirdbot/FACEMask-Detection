@@ -3,7 +3,6 @@ from sklearn.metrics import precision_score, recall_score, log_loss, accuracy_sc
 from pathlib import Path
 import os
 import joblib  # Add this import for model saving
-
 # Disable joblib warning about CPU cores
 os.environ['LOKY_MAX_CPU_COUNT'] = '4'  # Set to number of cores you want to use
 
@@ -37,8 +36,6 @@ class DecisionClass:
         x_train,ytrain,x_test,ytest = self._adapter()
         print(f"x_train shape: {x_train.shape}, ytrain shape: {ytrain.shape}, x_test shape: {x_test.shape}, ytest shape: {ytest.shape}")
         model.fit(x_train,ytrain)
-        # print(f"model saved to {self.save_path}")
-        # model.save(self.save_path)
         return model
     
     
@@ -48,7 +45,7 @@ class DecisionClass:
         accuracy = accuracy_score(ytest, y_pred)
         # Use accuracy as loss since it's more stable
         loss = 1 - accuracy
-        return loss, accuracy
+        return accuracy,loss
     
     def score(self,model):
         x_train,ytrain,x_test,ytest = self._adapter()

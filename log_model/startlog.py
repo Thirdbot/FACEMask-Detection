@@ -1,7 +1,8 @@
 import wandb
+from wandb.integration.keras import WandbCallback
 import numpy as np
 from PIL import Image
-
+from pathlib import Path
 config = dict(project="mask_detection", 
               name="mask_detection_v1",
                 epochs=10,
@@ -14,54 +15,84 @@ config = dict(project="mask_detection",
 # wandb.init(config=config)
 
 
-
+# artifact = wandb.use_artifact("your_username/dataset_project/cleaned_dataset:latest", type="dataset")
+# dataset_dir = artifact.download()
 class LogModel:
     def __init__(self,dataset_config):
         self._login()
+        self.wandb = wandb
+        self.api = wandb.Api()
+        self.main_path = Path(__file__).parent.parent.absolute()
         self.model_config = None
         self.dataset_config = dataset_config
-        self.raw_dataset = None
+        self.raw_dataset = None 
+        self.project = None
         self.preprocessed_dataset = None
+        
+        self.wandb.setup(self.wandb.Settings(reinit="finish_previous"))
+        # Get the entity from the API viewer
+        try:
+            self.user = self.api.viewer().get("entity")
+        except:
+            self.user = None
+            
+          # Replace with your actual project name
+        
+        self.version = "latest"  # or "v0", "v1", etc.
+
     def _login(self):
-        wandb.login()
-    
-    def raw_data_and_log(self,raw_dataset):
-        self.raw_dataset = raw_dataset
-        #set up artifact
-        with wandb.init(project="dataset_artifact",job_type="load-data") as run:
-            names = self.dataset_config
+        try:
+            self.wandb.login()
+        except Exception as e:
+            print(f"Warning: Failed to login to wandb: {e}")
+            print("Please make sure you have run 'wandb login' in your terminal")
+       
+    def create_project_dataset(self,project_name,dataset_name,dataset_path):
+        self.project = self.wandb.init(project=project_name,name=dataset_name)
+         # Create and log the artifact
+        artifact = self.wandb.Artifact(
+            name=dataset_name,
+            type="dataset",
+            description="Face mask detection dataset"
+        )
+        artifact.add_dir(str(dataset_path))
+        self.project.log_artifact(artifact)
+       
+        
+    def create_project_model(self,project_name,model_name,model_path=None,resume=False):
+        if resume:
+            self.project= self.wandb.init(project=project_name,name=model_name,resume="allow")
+        else:
+            self.project= self.wandb.init(project=project_name,name=model_name)
+       
+        
+        artifact = self.wandb.Artifact(
+            name=model_name,
+            type="model",
+            description="Face mask detection model"
+        )
+        if model_path:
+            artifact.add_file(str(model_path))
             
-            #create artifact placeholder
-            raw_data = wandb.Artifact(name="raw_dataset",type="dataset",
-                                    description="dataset get from local directory.",
-                                    metadata={
-                                        "source":"local directory",
-                                        "size":[len(dataset) for dataset in raw_dataset]
-                                    })
-            # write data to artifact train,val
-            for name,dataset in zip(names,raw_dataset):
-                with raw_data.new_file(name+".npz",mode="wb") as f:
-                    #x,y of train/val
-                    np.savez(f,x=dataset[0],y=dataset[1])
-                
-                    
-            run.log_artifact(raw_data)
+        # run.log_artifact(artifact)
+
+    def load_dataset(self,dataset_name,dataset_path):
+        try:
+            # Try to use the artifact if it exists
+            artifact = self.wandb.use_artifact(f"{self.project_name}/{dataset_name}:{self.version}")
+            dataset_dir = artifact.download()
+            print(f"Successfully loaded dataset from {dataset_dir}")
+        except Exception as e:
+            print(f"Could not load existing artifact: {e}")
+            print("Creating new dataset artifact...")
+            self.raw_dataset = self.wandb.Artifact(name=dataset_name, type="dataset")
+            self.raw_dataset.add_dir(name=dataset_name, local_path=str(dataset_path))
+            if self.project:
+                self.project.log_artifact(self.raw_dataset)
             
-    def preprocessed_data_and_log(self,preprocessed_dataset,step):
-        self.preprocessed_dataset = preprocessed_dataset
-        #set up artifact
-        with wandb.init(project="dataset_artifact",job_type="preprocess-data") as run:
-            names = self.dataset_config
-            processed_data = wandb.Artifact(name="preprocessed_dataset",type="dataset",
-                                  description="preprocessed dataset get from local directory.",
-                                  metadata=step)
-            #declare use raw artifact
-            run.use_artifact('raw_dataset:latest')
-            for name,dataset in zip(names,preprocessed_dataset):
-                with processed_data.new_file(name+".npz",mode="wb") as f:
-                    np.savez(f,x=dataset[0],y=dataset[1])
-            #write data to artifact
-            run.log_artifact(processed_data)
+            
+            
+            
             
             
 
