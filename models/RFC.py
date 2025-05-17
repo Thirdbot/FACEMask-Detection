@@ -51,7 +51,7 @@ class RFC:
         accuracy = accuracy_score(ytest, y_pred)
         # Use accuracy as loss since it's more stable
         loss = 1 - accuracy
-        return loss, accuracy
+        return accuracy, loss
     
     def test_function(self,img):
         pass

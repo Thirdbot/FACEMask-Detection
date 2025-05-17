@@ -3,7 +3,6 @@ from sklearn.metrics import precision_score, recall_score, log_loss, accuracy_sc
 from pathlib import Path
 import os
 import joblib
-
 # Disable joblib warning about CPU cores
 os.environ['LOKY_MAX_CPU_COUNT'] = '4'  # Set to number of cores you want to use
 
@@ -49,10 +48,10 @@ class KNNClass:
     def score(self,model):
         x_train,ytrain,x_test,ytest = self._adapter()
         y_pred_knn = model.predict(x_test)
-        accuracy_knn = accuracy_score(ytest, y_pred_knn)
+        # accuracy_knn = accuracy_score(ytest, y_pred_knn)
         precision = precision_score(ytest, y_pred_knn, average="weighted")
         recall = recall_score(ytest, y_pred_knn, average="weighted")
-        return accuracy_knn, precision, recall
+        return precision, recall
     
     def test_function(self,img):
         pass
