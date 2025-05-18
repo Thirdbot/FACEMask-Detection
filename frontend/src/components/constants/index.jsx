@@ -47,12 +47,12 @@ export const membersData = [
   {
     name: "นาย ปัณณวัฒน์ นิ่งเจริญ",
     studentId: 6630250231,
-    responsibility: null,
+    responsibility: "Tester",
   },
   {
     name: "นาย พันธุ์ธัช สุวรรณวัฒนะ",
     studentId: 6630250281,
-    responsibility: "จัดการและทำความสะอาดข้อมูล Dataset",
+    responsibility: "จัดการและทำความสะอาดข้อมูล Dataset และ สร้าง AI Model",
   },
   {
     name: "นาย ปุณณภพ มีฤทธิ์",
@@ -62,23 +62,20 @@ export const membersData = [
   {
     name: "นาย วรินทร์ สายปัญญา",
     studentId: 6630250435,
-    responsibility: "Frontend และ UX/UI Design",
+    responsibility: "Frontend",
   },
   {
     name: "นางสาว อัมพุชินิ บุญรักษ์",
     studentId: 6630250532,
-    responsibility: null,
+    responsibility: "Backend",
   },
 ];
 
 export const modelNames = [
-  "Decision Tree",
   "Deep Learning (CNN)",
-  "K-Nearest Neighbors",
-  "Random Forest",
 ];
 
-export const mediaStramConstraints = {
+export const mediaStreamConstraints = {
   video: {
     width: { min: 1280, ideal: 1920, max: 2560 },
     height: { min: 720, ideal: 1080, max: 1440 },
