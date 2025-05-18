@@ -80,8 +80,8 @@ class LogModel:
         try:
             # Try to use the artifact if it exists
             artifact = self.wandb.use_artifact(f"{self.project_name}/{dataset_name}:{self.version}")
-            dataset_dir = artifact.download()
-            print(f"Successfully loaded dataset from {dataset_dir}")
+            # dataset_dir = artifact.download()
+            # print(f"Successfully loaded dataset from {dataset_dir}")
         except Exception as e:
             print(f"Could not load existing artifact: {e}")
             print("Creating new dataset artifact...")

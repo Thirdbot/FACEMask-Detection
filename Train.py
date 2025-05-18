@@ -49,7 +49,7 @@ Home_dir = Path(__file__).parent.absolute()
 
 dataset_path = Home_dir / "cleaned_dataset" / "data"
 
-class Main:
+class Trainer:
     def __init__(self):
         self.size =128
         self.epoch = 10
@@ -234,8 +234,17 @@ class Main:
             })
         return score_dict
 
+
+## TODO
+
+# create a sweeping for optimization
+#image dataset flood 
+#returning list and best model
+
+
+
 if __name__ == "__main__":
-    main = Main()
+    main = Trainer()
     # main.create_model("DecisionClass")
     main.train_all()
     # main.train("DecisionClass")
