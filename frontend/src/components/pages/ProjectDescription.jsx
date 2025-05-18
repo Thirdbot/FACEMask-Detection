@@ -33,9 +33,9 @@ const ProjectDescription = () => {
           </p>
           <div className="mt-4 mb-2">
             <h3 className="text-lg font-bold">Tech Stack</h3>
-            <p>Frontend: React, Tailwind CSS, MUI, WebRTC</p>
-            <p>Backend: Flask, aiortc</p>
-            <p>AI: Deep Learning</p>
+            <p>Frontend: React, React-Router, Tailwind CSS, MUI, WebRTC API</p>
+            <p>Backend: aiohttp, aiortc</p>
+            <p>AI: Tensorflow, keras, Deep Learning (CNN)</p>
             <p>Deploy: -</p>
           </div>
           <div className="mt-4 mb-2">

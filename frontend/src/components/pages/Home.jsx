@@ -8,16 +8,25 @@ import Title from "../ui/Title";
 const Home = () => {
   return (
     <AppContainer>
+      <div className="fixed top-0 left-0 w-full h-full -z-10">
+        <spline-viewer
+          url="https://prod.spline.design/m9pRL88zqUsjApin/scene.splinecode"
+          style={{ width: "100%", height: "100%" }}
+        ></spline-viewer>
+      </div>
       <Sidebar />
       <PageContent>
-        <Title text="หน้าหลัก" />
+        <div className="text-red-500">
+          <Title text="หน้าหลัก" />
+        </div>
         <img
           src="/assets/icons/logo.png"
           alt="ku-logo"
           className="size-60 shadow-xl"
         />
-        <p className="w-full mt-10 overflow-hidden leading-8 tracking-wide">
-          <span className="font-bold">KU FaceMask </span>
+      <div className="w-full mt-10 overflow-hidden leading-8 tracking-wide text-red-500">
+        <label htmlFor="">
+          <span className="font-bold ">KU FaceMask </span>
           เป็นเว็บไซต์ที่ถูกพัฒนาและออกแบบโดยนิสิตนักศึกษาชั้นปีที่ 2 ของ
           มหาวิทยาลัยเกษตรศาสตร์ วิทยาเขตศรีราชา นิสิต คณะวิทยาศาสตร์ สาขา
           วิทยาการคอมพิวเตอร์ ภาคพิเศษ เว็บไซต์นี้เป็นส่วนหนึ่งของโปรเจควิชา
@@ -42,7 +51,8 @@ const Home = () => {
             หน้ารายละเอียดโปรเจค
           </NavLink>
           </Tooltip>
-        </p>
+        </label>
+        </div> 
       </PageContent>
     </AppContainer>
   );
