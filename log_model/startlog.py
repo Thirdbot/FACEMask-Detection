@@ -19,7 +19,6 @@ config = dict(project="mask_detection",
 # dataset_dir = artifact.download()
 class LogModel:
     def __init__(self,dataset_config):
-        self._login()
         self.wandb = wandb
         self.api = wandb.Api()
         self.main_path = Path(__file__).parent.parent.absolute()
@@ -36,9 +35,8 @@ class LogModel:
         except:
             self.user = None
             
-          # Replace with your actual project name
-        
         self.version = "latest"  # or "v0", "v1", etc.
+        self._login()  # Move login to end of initialization
 
     def _login(self):
         try:

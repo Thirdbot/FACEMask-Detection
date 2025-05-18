@@ -25,5 +25,5 @@ dist-ssr
 
 env
 save/
-__pycache__
+__pycache__/
 wandb/
