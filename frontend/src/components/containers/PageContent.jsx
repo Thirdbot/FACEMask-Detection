@@ -1,7 +1,7 @@
 const PageContent = ({ children, className }) => {
   return (
     <div
-      className={`px-10 pt-14 ${className} flex flex-col items-center justify-start w-full`}
+      className={`p-10 w-full ${className ? className : "flex flex-col items-center justify-start"}`}
     >
       {children}
     </div>

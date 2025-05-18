@@ -22,36 +22,163 @@ const FaceMaskDetection = () => {
   const [isCameraAlertShown, setIsCameraAlertShown] = useState(false);
   const [isErrorAlertShown, setIsErrorAlertShown] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
+  const [isDetecting, setIsDetecting] = useState(false);
+  const [faces, setFaces] = useState([]);
+  const prevBoxesRef = useRef([]);
   const videoRef = useRef();
-  const pcRef = useRef(null);
-  const localStreamRef = useRef(null);
+  const canvasRef = useRef();
+  const intervalRef = useRef(null);
+  const overlayRef = useRef();
 
   useEffect(() => {
     setIsCameraAlertShown(isCameraOpen);
+
+    if (isCameraOpen) {
+      handleDetectFaceMask();
+    } else {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      setFaces([]);
+      prevBoxesRef.current = [];
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
   }, [isCameraOpen]);
+
+  // Smooth box animation using requestAnimationFrame
+  useEffect(() => {
+    let animFrame = null;
+    const overlay = overlayRef.current;
+    const video = videoRef.current;
+
+    if (!overlay || !video) {
+      return;
+    }
+
+    const ctx = overlay.getContext("2d");
+    overlay.width = video.videoWidth;
+    overlay.height = video.videoHeight;
+
+    // Helper: linear interpolation
+    const lerp = (a, b, t) => {
+      return a + (b - a) * t;
+    };
+
+    // Animate boxes
+    const animateBoxes = () => {
+      ctx.clearRect(0, 0, overlay.width, overlay.height);
+      if (!faces || !video.videoWidth || !video.videoHeight) {
+        return;
+      }
+
+      // Prepare previous and current boxes
+      let prevBoxes = prevBoxesRef.current;
+      let currBoxes = faces.map((f) => f.box);
+
+      // Interpolate positions
+      let smoothBoxes = faces.map((face, i) => {
+        if (!face.box) return null;
+        let prev = prevBoxes && prevBoxes[i] ? prevBoxes[i] : face.box;
+        // Lerp each coordinate
+        return prev.map((v, idx) => lerp(v, face.box[idx], 0.1));
+      });
+
+      // Draw
+      faces.forEach((face, i) => {
+        if (face.box && smoothBoxes[i]) {
+          const [x, y, w, h] = smoothBoxes[i];
+          ctx.lineWidth = 4;
+          ctx.strokeStyle =
+            face.label === "Wearing Mask" ? "#22c55e" : "#ef4444";
+          ctx.strokeRect(x, y, w, h);
+          ctx.font = "20px IBM Plex Sans Thai";
+          ctx.fillStyle = face.label === "Wearing Mask" ? "#22c55e" : "#ef4444";
+          // Show label and confidence
+          const conf =
+            face.confidence !== undefined
+              ? ` (${(face.confidence * 100).toFixed(1)}%)`
+              : "";
+          ctx.fillText(face.label + conf, x, y - 10);
+        }
+      });
+
+      // Save for next frame
+      prevBoxesRef.current = faces.map((f) => f.box);
+
+      animFrame = requestAnimationFrame(animateBoxes);
+    };
+
+    animateBoxes();
+
+    return () => {
+      if (animFrame) {
+        cancelAnimationFrame(animFrame);
+      }
+    };
+  }, [faces, isCameraOpen]);
 
   const handleOpenCamera = useCallback(async () => {
     setIsCameraOpen(true);
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia(
         mediaStreamConstraints
       );
-      
       videoRef.current.srcObject = stream;
-      localStreamRef.current = stream;
-      await handleStartConnection(stream);
     } catch (err) {
       if (err instanceof Error) {
-        handleCloseCamera();
         handleShowErrorAlert(err.message);
-        handleCloseConnection();
+        handleCloseCamera();
       }
     }
   }, []);
 
+  const handleDetectFaceMask = useCallback(() => {
+    intervalRef.current = setInterval(async () => {
+      // if (!videoRef.current) return;
+      // Draw current frame to canvas
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      // if (!canvas || video.videoWidth === 0 || video.videoHeight === 0) return;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const image = canvas.toDataURL("image/jpeg");
+
+      setIsDetecting(true);
+      try {
+        const { data } = await axios.post("http://localhost:5000/api/mask-detection", {
+          image,
+        });
+        console.log(data)
+        setFaces(data.results || []);
+      } catch (err) {
+        if (err instanceof Error) {
+          setFaces([{ box: null, label: "Error", confidence: 0 }]);
+          handleCloseCamera();
+          handleShowErrorAlert(err.message);
+        }
+      } finally {
+        setIsDetecting(false);
+      }
+    }, 5000);
+  }, []);
+
   const handleCloseCamera = useCallback(() => {
     setIsCameraOpen(false);
-    handleCloseConnection();
+
+    if (videoRef.current && videoRef.current.srcObject) {
+      videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
+      videoRef.current.srcObject = null;
+    }
   }, []);
 
   const handleCloseCameraAlert = useCallback(() => {
@@ -65,54 +192,6 @@ const FaceMaskDetection = () => {
 
   const handleCloseErrorAlert = useCallback(() => {
     setIsErrorAlertShown(false);
-  }, []);
-
-  const handleStartConnection = useCallback(async (stream) => {
-    const pc = new RTCPeerConnection();
-    pcRef.current = pc;
-
-    stream.getTracks().forEach((track) => pc.addTrack(track, stream));
-
-    const inboundStream = new MediaStream();
-    pc.ontrack = (event) => {
-      if (event.track.kind === "video") {
-        inboundStream.addTrack(event.track);
-        if (videoRef.current) {
-          videoRef.current.srcObject = inboundStream;
-        }
-      }
-    };
-
-    try {
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      const { sdp, type } = pc.localDescription;
-      const { data } = await axios.post("http://localhost:8080/offer", {
-        sdp,
-        type,
-      });
-      await pc.setRemoteDescription(new RTCSessionDescription(data));
-      console.log(data);
-    } catch (err) {
-      throw err;
-    }
-  }, []);
-
-  const handleCloseConnection = useCallback(() => {
-    if (pcRef.current) {
-      pcRef.current.close();
-      pcRef.current = null;
-    }
-
-    if (videoRef.current.srcObject) {
-      videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
-      videoRef.current.srcObject = null;
-    }
-
-    if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach((track) => track.stop());
-      localStreamRef.current = null;
-    }
   }, []);
 
   return (
@@ -188,10 +267,26 @@ const FaceMaskDetection = () => {
           <video
             autoPlay
             playsInline
-            muted
             ref={videoRef}
             className="bg-gradient-to-b from-neutral-950 via-neutral-900 bg-neutral-800 rounded-3xl w-full h-[450px] object-cover shadow-3xl border-8 border-black/80 box-border"
           />
+          {/* Hidden canvas for capturing frame */}
+          <canvas ref={canvasRef} style={{ display: "none" }} />
+          {/* Overlay canvas for drawing rectangles */}
+          <canvas
+            ref={overlayRef}
+            className="absolute top-0 left-0 w-full h-full pointer-events-none"
+          />
+          {faces.length === 1 &&
+          faces[0].label &&
+          !faces[0].box &&
+          isCameraOpen ? (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-slate-50 px-6 py-2 rounded-xl text-xl font-bold z-20 select-none tracking-wide">
+              {isDetecting ? "กำลังตรวจสอบใบหน้า ..." : faces[0].label}
+            </div>
+          ) : (
+            <></>
+          )}
         </div>
         <ButtonGroup
           className="mt-6 w-full flex items-center justify-evenly"
