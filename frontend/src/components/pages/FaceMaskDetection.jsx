@@ -155,7 +155,7 @@ const FaceMaskDetection = () => {
 
       setIsDetecting(true);
       try {
-        const { data } = await axios.post("http://localhost:8080/detect", {
+        const { data } = await axios.post("http://localhost:5000/api/mask-detection", {
           image,
         });
         setFaces(data.results || []);

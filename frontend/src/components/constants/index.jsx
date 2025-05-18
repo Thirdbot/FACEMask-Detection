@@ -47,7 +47,7 @@ export const membersData = [
   {
     name: "นาย ปัณณวัฒน์ นิ่งเจริญ",
     studentId: 6630250231,
-    responsibility: null,
+    responsibility: "Tester",
   },
   {
     name: "นาย พันธุ์ธัช สุวรรณวัฒนะ",
