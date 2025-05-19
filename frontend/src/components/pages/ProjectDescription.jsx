@@ -6,6 +6,10 @@ import CodeRoundedIcon from "@mui/icons-material/CodeRounded";
 import InsertLinkRoundedIcon from "@mui/icons-material/InsertLinkRounded";
 import Title from "../ui/Title";
 import HorizontalLine from "../ui/HorizontalLine";
+import List from "@mui/material/List";
+import ListSubheader from "@mui/material/ListSubheader";
+import ListItem from "@mui/material/ListItem";
+import ListItemText from "@mui/material/ListItemText";
 
 const ProjectDescription = () => {
   return (
@@ -31,54 +35,94 @@ const ProjectDescription = () => {
             และสามารถทำงานได้อย่างลื่นไหลบนเบราว์เซอร์ทั่วไป
           </p>
           <HorizontalLine />
-          <div className="mt-6 mb-2">
-            <h3 className="text-lg font-bold mb-2">
-              <CodeRoundedIcon className="me-1" /> Tech Stack
-            </h3>
-            <p>Frontend: React, React-Router, Tailwind CSS, MUI</p>
-            <p>Backend: Flask</p>
-            <p>AI Model: Tensorflow, Keras, Deep Learning (CNN)</p>
-            <p>Deploy: Vercel, Render</p>
-          </div>
-          <div className="mt-6 mb-2">
-            <h3 className="text-lg font-bold mb-2">
-              <InsertLinkRoundedIcon className="me-1" />
-              ลิ้งค์อื่นๆ
-            </h3>
-            <p>
-              Source Code:{" "}
-              <Tooltip
-                title={<p>ลิ้งค์โค้ดของโปรเจค</p>}
-                arrow
-                placement="right"
-              >
-                <a
-                  href="https://github.com/Thirdbot/FACEMask-Detection"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-green-500 underline"
-                >
-                  Github
-                </a>
-              </Tooltip>
-            </p>
-            <p>
-              Dataset:{" "}
-              <Tooltip
-                title={<p>ลิ้งค์ของข้อมูล Dataset</p>}
-                arrow
-                placement="right"
-              >
-                <a
-                  href="https://www.kaggle.com/datasets/omkargurav/face-mask-dataset"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-green-500 underline"
-                >
-                  Kaggle
-                </a>
-              </Tooltip>
-            </p>
+          <div className="mt-6">
+            <List
+              subheader={
+                <ListSubheader sx={{ fontSize: "1rem" }} color="primary">
+                  <h3 className="text-lg font-bold">
+                    <CodeRoundedIcon className="me-1" /> Tech Stack
+                  </h3>
+                </ListSubheader>
+              }
+            >
+              <ListItem>
+                <ListItemText
+                  primary={
+                    <p>Frontend: React, React-Router, Tailwind CSS, MUI</p>
+                  }
+                />
+              </ListItem>
+              <ListItem>
+                <ListItemText primary={<p>Backend: Flask</p>} />
+              </ListItem>{" "}
+              <ListItem>
+                <ListItemText
+                  primary={
+                    <p>AI Model: Tensorflow, Keras, Deep Learning (CNN)</p>
+                  }
+                />
+              </ListItem>{" "}
+              <ListItem>
+                <ListItemText primary={<p>Deploy: Vercel, Render</p>} />
+              </ListItem>
+            </List>
+            <List
+              subheader={
+                <ListSubheader sx={{ fontSize: "1rem" }} color="primary">
+                  <h3 className="text-lg font-bold mb-2">
+                    <InsertLinkRoundedIcon className="me-1" />
+                    ลิ้งค์อื่นๆ
+                  </h3>
+                </ListSubheader>
+              }
+            >
+              <ListItem>
+                <ListItemText
+                  primary={
+                    <p>
+                      Source Code:{" "}
+                      <Tooltip
+                        title={<p>ลิ้งค์โค้ดของโปรเจค</p>}
+                        arrow
+                        placement="right"
+                      >
+                        <a
+                          href="https://github.com/Thirdbot/FACEMask-Detection"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-green-500 underline"
+                        >
+                          Github
+                        </a>
+                      </Tooltip>
+                    </p>
+                  }
+                />
+              </ListItem>
+              <ListItem>
+                <ListItemText
+                  primary={
+                    <p>
+                      Dataset:{" "}
+                      <Tooltip
+                        title={<p>ลิ้งค์ของข้อมูล Dataset</p>}
+                        arrow
+                        placement="right"
+                      >
+                        <a
+                          href="https://www.kaggle.com/datasets/omkargurav/face-mask-dataset"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-green-500 underline"
+                        >
+                          Kaggle
+                        </a>
+                      </Tooltip>
+                    </p>
+                  }
+                />
+              </ListItem>
+            </List>
           </div>
         </div>
       </PageContent>

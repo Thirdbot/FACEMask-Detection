@@ -36,7 +36,7 @@ export const menuItems = [
     pathname: "/dashboard/settings",
     text: "ตั้งค่า",
     icon: (
-      <Badge color="info" badgeContent={2}>
+      <Badge color="info" badgeContent={5}>
         <SettingsRoundedIcon />
       </Badge>
     ),
@@ -71,15 +71,38 @@ export const membersData = [
   },
 ];
 
-export const modelNames = [
-  "Deep Learning (CNN)",
-];
+export const modelNames = ["Deep Learning (CNN)"];
 
 export const mediaStreamConstraints = {
   video: {
-    width: { min: 1280, ideal: 1920, max: 2560 },
-    height: { min: 720, ideal: 1080, max: 1440 },
+    width: { min: 854, ideal: 1280, max: 1920 },
+    height: { min: 480, ideal: 720, max: 1080 },
     frameRate: { min: 30, ideal: 60, max: 90 },
   },
   audio: false,
+};
+
+export const framerateMarks = [
+  {
+    value: 30,
+    label: "30 FPS",
+  },
+  {
+    value: 60,
+    label: "60 FPS",
+  },
+  {
+    value: 90,
+    label: "90 FPS",
+  },
+];
+
+export const cameraResolutions = ["SD", "HD", "Full HD"];
+
+export const defaultSettings = {
+  defaultTheme: localStorage.getItem("theme"),
+  defaultNotification: true,
+  defaultFramerate: 60,
+  defaultCameraResolution: "HD",
+  defaultModel: "Deep Learning (CNN)",
 };
