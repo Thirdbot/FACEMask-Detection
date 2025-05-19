@@ -1,4 +1,3 @@
-import "https://unpkg.com/@splinetool/viewer@1.9.89/build/spline-viewer.js";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router";
 import { ThemeProvider } from "@mui/material/styles";
