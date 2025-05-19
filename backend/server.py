@@ -6,7 +6,7 @@ import numpy as np
 from utils.detect_mask import detect_mask_multi
 from tensorflow.keras.models import load_model  # type: ignore
 
-origin = "http://localhost:5173"
+origins = ["http://localhost:5173"]
 path = "./models/mask_detector_model.h5"
 model = load_model(path)
 
@@ -19,7 +19,7 @@ def index():
 
 
 @app.post("/api/mask-detection")
-@cross_origin(origin=origin, methods="POST", allow_headers="Content-Type")
+@cross_origin(origins=origins, methods=["POST"], allow_headers=["Content-Type"])
 def predict():
     try:
         data = request.get_json()
