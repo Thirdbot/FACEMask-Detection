@@ -32,7 +32,7 @@ import random
 import shutil
 import torch
 from modelLoader import ModelLoader
-from log_model.startlog import LogModel
+from module.startlog import LogModel
 import wandb
 
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
