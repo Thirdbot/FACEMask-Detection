@@ -27,7 +27,35 @@ class LogModel:
         self.raw_dataset = None 
         self.project = None
         self.preprocessed_dataset = None
+        self.project_name = None  # Initialize project_name
         
+        self.sweep_configuration = {
+            "method":"random",
+            "name":"sweep",
+            "metric":{"goal":"maximize","name":"val_acc"},
+            "parameters":{
+                "model_type":{"values":["RFC","KNNClass","DecisionClass","DeepLearning"]},
+                    "batch_size":{"values":[16,32,64]},
+                    "epochs":{"values":[10,20,30]},
+                    "lr":{"max":0.1,"min":0.001},
+                    "n_neighbors":{"values":[3,5,7]},
+                    "max_depth":{"values":[3,5,7]},
+                    "min_samples_split":{"values":[2,4,6]},
+                    "min_samples_leaf":{"values":[1,2,3]},
+                    "max_features":{"values":["sqrt","log2"]},
+                    "criterion":{"values":["gini","entropy"]},
+                    "splitter":{"values":["best","random"]},
+                    "n_estimators":{"values":[10,20,30]},
+                    "leaf_size":{"values":[30,40,50]},
+                    "p":{"values":[1,2,3]},
+                    "metric":{"values":["minkowski","euclidean"]},
+                    "weights":{"values":["uniform","distance"]},
+                }
+        }
+        
+        
+        
+        self._login()  
         self.wandb.setup(self.wandb.Settings(reinit="finish_previous"))
         # Get the entity from the API viewer
         try:
@@ -35,8 +63,7 @@ class LogModel:
         except:
             self.user = None
             
-        self.version = "latest"  # or "v0", "v1", etc.
-        self._login()  # Move login to end of initialization
+        self.version = "latest"  
 
     def _login(self):
         try:
@@ -46,6 +73,7 @@ class LogModel:
             print("Please make sure you have run 'wandb login' in your terminal")
        
     def create_project_dataset(self,project_name,dataset_name,dataset_path):
+        self.project_name = project_name
         self.project = self.wandb.init(project=project_name,name=dataset_name)
          # Create and log the artifact
         artifact = self.wandb.Artifact(
@@ -58,11 +86,13 @@ class LogModel:
        
         
     def create_project_model(self,project_name,model_name,model_path=None,resume=False):
+        
         if resume:
             self.project= self.wandb.init(project=project_name,name=model_name,resume="allow")
         else:
             self.project= self.wandb.init(project=project_name,name=model_name)
        
+        self.model_config = self.wandb.config
         
         artifact = self.wandb.Artifact(
             name=model_name,
@@ -76,10 +106,11 @@ class LogModel:
 
     def load_dataset(self,dataset_name,dataset_path):
         try:
-            # Try to use the artifact if it exists
-            artifact = self.wandb.use_artifact(f"{self.project_name}/{dataset_name}:{self.version}")
-            # dataset_dir = artifact.download()
-            # print(f"Successfully loaded dataset from {dataset_dir}")
+            if self.project_name: 
+
+                artifact = self.wandb.use_artifact(f"{self.project_name}/{dataset_name}:{self.version}")
+            else:
+                raise ValueError("Project name not set. Please create project first.")
         except Exception as e:
             print(f"Could not load existing artifact: {e}")
             print("Creating new dataset artifact...")
