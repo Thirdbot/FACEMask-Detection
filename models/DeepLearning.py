@@ -18,7 +18,7 @@ class DeepLearning:
         self.validate_data = None
         self.num_classes = 2
         self.config = config
-        self.class_label = {0:"with_mask",1:"without_mask"}
+        self.class_label = {1:"with_mask",0:"without_mask"}
         self.callback = None
 
     def __get_attribute__(self, item):
@@ -85,7 +85,13 @@ class DeepLearning:
         print(f"config: {self.config}")
         xtrain,ytrain,x_test,ytest = self._adapter()
         print(f"print shape of train data: {xtrain.shape,ytrain.shape}")
-        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+        
+        # Configure optimizer with learning rate
+        optimizer = tf.keras.optimizers.get(self.config['optimizer'])
+        if 'lr' in self.config:
+            optimizer.learning_rate = self.config['lr']
+            
+        model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
         print(f"model compiled")
         
         # Initialize callbacks
@@ -94,10 +100,13 @@ class DeepLearning:
         # Add model checkpoint
         callbacks.append(self.callback if self.callback else WandbMetricsLogger(log_freq="epoch"))
         
+        # Remove lr and optimizer from config as they're already handled
+        training_config = {k:v for k,v in self.config.items() if k not in ['lr', 'optimizer']}
+        
         model.fit(
             xtrain, ytrain,
             validation_data=(x_test, ytest),
-            **self.config,
+            **training_config,
             callbacks=callbacks
         )
         

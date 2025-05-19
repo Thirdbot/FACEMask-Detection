@@ -34,23 +34,36 @@ class LogModel:
             "name":"sweep",
             "metric":{"goal":"maximize","name":"val_acc"},
             "parameters":{
-                "model_type":{"values":["RFC","KNNClass","DecisionClass","DeepLearning"]},
+                'DeepLearning':{
                     "batch_size":{"values":[16,32,64]},
                     "epochs":{"values":[10,20,30]},
-                    "lr":{"max":0.1,"min":0.001},
-                    "n_neighbors":{"values":[3,5,7]},
+                    "optimizer":{"values":["adam","sgd"]},
+                    "lr":{"values":[0.001,0.01,0.1]}
+                },
+                'RFC':{
+                    "n_estimators":{"values":[10,20,30]},
+                    "max_depth":{"values":[3,5,7]},
+                    "min_samples_split":{"values":[2,4,6]},
+                    "min_samples_leaf":{"values":[1,2,3]},
+                    "max_features":{"values":["sqrt","log2"]},
+                    "criterion":{"values":["gini","entropy"]}
+                },
+                'DecisionClass':{
                     "max_depth":{"values":[3,5,7]},
                     "min_samples_split":{"values":[2,4,6]},
                     "min_samples_leaf":{"values":[1,2,3]},
                     "max_features":{"values":["sqrt","log2"]},
                     "criterion":{"values":["gini","entropy"]},
-                    "splitter":{"values":["best","random"]},
-                    "n_estimators":{"values":[10,20,30]},
+                    "splitter":{"values":["best","random"]}
+                },
+                'KNNClass':{
+                    "n_neighbors":{"values":[3,5,7]},
                     "leaf_size":{"values":[30,40,50]},
                     "p":{"values":[1,2,3]},
                     "metric":{"values":["minkowski","euclidean"]},
-                    "weights":{"values":["uniform","distance"]},
+                    "weights":{"values":["uniform","distance"]}
                 }
+            }
         }
         
         
@@ -94,13 +107,14 @@ class LogModel:
        
         self.model_config = self.wandb.config
         
-        artifact = self.wandb.Artifact(
-            name=model_name,
-            type="model",
-            description="Face mask detection model"
-        )
-        if model_path:
-            artifact.add_file(str(model_path))
+        #created by sweep
+        # artifact = self.wandb.Artifact(
+        #     name=model_name,
+        #     type="model",
+        #     description="Face mask detection model"
+        # )
+        # if model_path:
+        #     artifact.add_file(str(model_path))
             
         # run.log_artifact(artifact)
 

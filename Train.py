@@ -96,7 +96,7 @@ class Trainer:
         
                                         self.size)
         
-        self.model_list = ["KNNClass","DecisionClass","DeepLearning","RFC"]
+        self.model_list = ["DeepLearning","KNNClass","DecisionClass","RFC"]
         
         
         self.deeplearning_config = dict(
@@ -140,31 +140,31 @@ class Trainer:
         
     def create_model(self,model_name,config=None):
         
-        if model_name == "DeepLearning":
-            self.config["DeepLearning"]["epochs"] = getattr(config, 'epochs', 10)
-            self.config["DeepLearning"]["batch_size"] = getattr(config, 'batch_size', 16)
-            self.config["DeepLearning"]["validation_split"] = getattr(config, 'validation_split', 0.2)
-            self.config["DeepLearning"]["shuffle"] = getattr(config, 'shuffle', True)
-        if model_name == "KNNClass":
-            self.config["KNNClass"]["n_neighbors"] = getattr(config, 'n_neighbors', 5)
-            self.config["KNNClass"]["weights"] = getattr(config, 'weights', "uniform")
-            self.config["KNNClass"]["leaf_size"] = getattr(config, 'leaf_size', 30)
-            self.config["KNNClass"]["p"] = getattr(config, 'p', 2)
-            self.config["KNNClass"]["metric"] = getattr(config, 'metric', "minkowski")
-        if model_name == "DecisionClass":
-            self.config["DecisionClass"]["criterion"] = getattr(config, 'criterion', "gini")
-            self.config["DecisionClass"]["splitter"] = getattr(config, 'splitter', "best")
-            self.config["DecisionClass"]["max_depth"] = getattr(config, 'max_depth', None)
-            self.config["DecisionClass"]["min_samples_split"] = getattr(config, 'min_samples_split', 2)
-            self.config["DecisionClass"]["min_samples_leaf"] = getattr(config, 'min_samples_leaf', 1)
-            self.config["DecisionClass"]["max_features"] = getattr(config, 'max_features', "sqrt")
-        if model_name == "RFC":
-            self.config["RFC"]["n_estimators"] = getattr(config, 'n_estimators', 100)
-            self.config["RFC"]["max_depth"] = getattr(config, 'max_depth', None)
-            self.config["RFC"]["criterion"] = getattr(config, 'criterion', "gini")
-            self.config["RFC"]["min_samples_split"] = getattr(config, 'min_samples_split', 2)
-            self.config["RFC"]["min_samples_leaf"] = getattr(config, 'min_samples_leaf', 1)
-            self.config["RFC"]["max_features"] = getattr(config, 'max_features', "sqrt")
+        # if model_name == "DeepLearning":
+        #     self.config["DeepLearning"]["epochs"] = getattr(config, 'epochs', 10)
+        #     self.config["DeepLearning"]["batch_size"] = getattr(config, 'batch_size', 16)
+        #     self.config["DeepLearning"]["validation_split"] = getattr(config, 'validation_split', 0.2)
+        #     self.config["DeepLearning"]["shuffle"] = getattr(config, 'shuffle', True)
+        # if model_name == "KNNClass":
+        #     self.config["KNNClass"]["n_neighbors"] = getattr(config, 'n_neighbors', 5)
+        #     self.config["KNNClass"]["weights"] = getattr(config, 'weights', "uniform")
+        #     self.config["KNNClass"]["leaf_size"] = getattr(config, 'leaf_size', 30)
+        #     self.config["KNNClass"]["p"] = getattr(config, 'p', 2)
+        #     self.config["KNNClass"]["metric"] = getattr(config, 'metric', "minkowski")
+        # if model_name == "DecisionClass":
+        #     self.config["DecisionClass"]["criterion"] = getattr(config, 'criterion', "gini")
+        #     self.config["DecisionClass"]["splitter"] = getattr(config, 'splitter', "best")
+        #     self.config["DecisionClass"]["max_depth"] = getattr(config, 'max_depth', None)
+        #     self.config["DecisionClass"]["min_samples_split"] = getattr(config, 'min_samples_split', 2)
+        #     self.config["DecisionClass"]["min_samples_leaf"] = getattr(config, 'min_samples_leaf', 1)
+        #     self.config["DecisionClass"]["max_features"] = getattr(config, 'max_features', "sqrt")
+        # if model_name == "RFC":
+        #     self.config["RFC"]["n_estimators"] = getattr(config, 'n_estimators', 100)
+        #     self.config["RFC"]["max_depth"] = getattr(config, 'max_depth', None)
+        #     self.config["RFC"]["criterion"] = getattr(config, 'criterion', "gini")
+        #     self.config["RFC"]["min_samples_split"] = getattr(config, 'min_samples_split', 2)
+        #     self.config["RFC"]["min_samples_leaf"] = getattr(config, 'min_samples_leaf', 1)
+        #     self.config["RFC"]["max_features"] = getattr(config, 'max_features', "sqrt")
             
             
         self.model_loader.config = self.config[model_name]
@@ -185,38 +185,42 @@ class Trainer:
                 resume=True
             )
             
-            self.model_config = self.log_model.model_config
             
-            # Configure sweep with model-specific parameters
-            sweep_config = self.log_model.sweep_configuration.copy()
+            
+            
             # sweep_config["parameters"]["model_type"] = {"value": model_name}
+            self.log_model.sweep_configuration.update({'name':model_name})
+            sweep_config = self.log_model.sweep_configuration.copy()
             
-            sweep_config.update({
-                "name":model_name
-            })
+            new_sweep_config = {}
+            if sweep_config['parameters'][model_name]:
+                new_sweep_config['method'] = sweep_config['method']
+                new_sweep_config['name'] = sweep_config['name']
+                new_sweep_config['metric'] = sweep_config['metric']
+                new_sweep_config['parameters'] = sweep_config['parameters'][model_name]
+            else:
+                raise ValueError(f"Model {model_name} not found in sweep configuration")
             
+            # # Filter parameters based on model type
+            # if model_name == "KNNClass":
+            #     valid_params = ["n_neighbors", "weights", "leaf_size", "p", "metric"]
+            # elif model_name == "DecisionClass":
+            #     valid_params = ["criterion", "splitter", "max_depth", "min_samples_split", "min_samples_leaf", "max_features"]
+            # elif model_name == "RFC":
+            #     valid_params = ["n_estimators", "max_depth", "criterion", "min_samples_split", "min_samples_leaf", "max_features"]
+            # elif model_name == "DeepLearning":
+            #     valid_params = ["batch_size", "epochs", "learning_rate"]
             
+            # # # Remove invalid parameters
+            # sweep_config["parameters"] = {k: v for k, v in sweep_config["parameters"].items() 
+            #                             if k in valid_params or k == "name"}
             
-            # Filter parameters based on model type
-            if model_name == "KNNClass":
-                valid_params = ["n_neighbors", "weights", "leaf_size", "p", "metric"]
-            elif model_name == "DecisionClass":
-                valid_params = ["criterion", "splitter", "max_depth", "min_samples_split", "min_samples_leaf", "max_features"]
-            elif model_name == "RFC":
-                valid_params = ["n_estimators", "max_depth", "criterion", "min_samples_split", "min_samples_leaf", "max_features"]
-            elif model_name == "DeepLearning":
-                valid_params = ["batch_size", "epochs", "learning_rate"]
-            
-            # Remove invalid parameters
-            sweep_config["parameters"] = {k: v for k, v in sweep_config["parameters"].items() 
-                                        if k in valid_params or k == "name"}
-            
-            self.sweep_id = wandb.sweep(sweep_config,project=self.project_name)
+            self.sweep_id = wandb.sweep(new_sweep_config,project=self.project_name)
             
             # Define the training function that will be used by the agent
             def train_func():
                 # Update model with sweep parameters
-                with self.log_model.wandb.init() as run:
+                with self.log_model.wandb.init(name=model_name) as run:
                     self.create_model(model_name, run.config)
                     # Train the model
                     self.model_loader.train(self.model)
