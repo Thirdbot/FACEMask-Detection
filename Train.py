@@ -159,12 +159,12 @@ class Trainer:
                 
             
             # Run the agent with the training function
-            self.log_model.wandb.agent(self.sweep_id, function=train_func, count=2 )
+            wandb.agent(self.sweep_id, function=train_func, count=2 )
             
             ####update table of val data
             self.eval_dataset(model_name,self.valid_data[0],self.valid_data[1])
                 
-            self.log_model.wandb.finish()
+            wandb.finish()
         
         # Print best models summary
         print("\nBest Models Summary:")
@@ -230,7 +230,7 @@ class Trainer:
             y_pred_idx = np.argmax(y_pred)
             y_true_idx = np.argmax(y_true)
             # Create wandb image
-            wandb_image = self.log_model.wandb.Image(
+            wandb_image = wandb.Image(
                 x,
                 caption=f"True: {self.dataset_loader.class_label[y_true_idx]}, Pred: {self.dataset_loader.class_label[y_pred_idx]}"
             )

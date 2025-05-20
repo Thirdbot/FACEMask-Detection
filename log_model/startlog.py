@@ -97,9 +97,9 @@ class LogModel:
        
     def create_project_dataset(self,project_name,dataset_name,dataset_path):
         self.data_project_name = project_name
-        self.data_proj = self.wandb.init(project=project_name,name=dataset_name,job_type='dataset')
+        self.data_proj = wandb.init(project=project_name,name=dataset_name,job_type='dataset')
          # Create and log the artifact
-        artifact = self.wandb.Artifact(
+        artifact = wandb.Artifact(
             name=dataset_name,
             type="dataset",
             description="Face mask detection dataset"
@@ -108,23 +108,23 @@ class LogModel:
         # self.project.log_artifact(artifact)
         
         # Create a static table
-        self.standard_table = self.wandb.Table(columns=["image", "label"])
+        self.standard_table = wandb.Table(columns=["image", "label"])
         
         
     def create_table(self,model_name,project_name,columns):
-        self.new_table = self.wandb.init(project=project_name,name=f"{model_name}_validation", job_type='dataset')
-        self.eval_table = self.wandb.Table(columns=columns)
+        self.new_table = wandb.init(project=project_name,name=f"{model_name}_validation", job_type='dataset')
+        self.eval_table = wandb.Table(columns=columns)
                 
     def create_project_model(self,project_name,model_name,model_path=None,resume=False):
         self.model_project_name = project_name
         if resume:
-            self.model_proj= self.wandb.init(project=project_name,name=model_name,resume="allow",job_type='model')
+            self.model_proj= wandb.init(project=project_name,name=model_name,resume="allow",job_type='model')
         else:
-            self.model_proj= self.wandb.init(project=project_name,name=model_name,job_type='model')
+            self.model_proj= wandb.init(project=project_name,name=model_name,job_type='model')
        
         self.model_config = self.model_proj.config        
         #created by sweep
-        artifact = self.wandb.Artifact(
+        artifact = wandb.Artifact(
             name=model_name,
             type="model",
             description="Face mask detection model"
