@@ -55,3 +55,29 @@ export const getMediaStreamConstraints = () => {
     audio: false,
   };
 };
+
+export const settingsReducer = (
+  state,
+  {
+    type,
+    event: {
+      target: { value, checked },
+    },
+  }
+) => {
+  switch (type) {
+    case "isExpanded":
+    case "isNotificationEnabled":
+      return { ...state, [type]: checked };
+    case "theme":
+      const newTheme = state.theme === "dark" ? "light" : "dark";
+      return { ...state, [type]: newTheme };
+    case "framerate":
+      return { ...state, [type]: parseInt(value) };
+    case "cameraResolution":
+    case "model":
+      return { ...state, [type]: value };
+    default:
+      throw new Error("ไม่สามารถอัปเดตการตั้งค่าได้!");
+  }
+};

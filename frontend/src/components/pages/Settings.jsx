@@ -1,4 +1,11 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import {
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+  useTransition,
+  useReducer,
+} from "react";
 import { useColorScheme } from "@mui/material/styles";
 import Switch from "@mui/material/Switch";
 import FormControl from "@mui/material/FormControl";
@@ -9,6 +16,7 @@ import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Button from "@mui/material/Button";
 import Slider from "@mui/material/Slider";
+import Stack from "@mui/material/Stack";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 import AlertTitle from "@mui/material/AlertTitle";
@@ -23,50 +31,57 @@ import PageContent from "../containers/PageContent";
 import Sidebar from "../ui/Sidebar";
 import Title from "../ui/Title";
 import { modelNames, framerateMarks, cameraResolutions } from "../constants";
-import { updateSettings, loadSettings } from "../../utils/helper";
+import {
+  updateSettings,
+  loadSettings,
+  settingsReducer,
+} from "../../utils/helper";
 
 const Settings = () => {
+  const [isPending, startTransition] = useTransition();
   const settingRef = useRef(loadSettings());
-  const [settings, setSettings] = useState(settingRef.current);
+  const [state, dispatch] = useReducer(settingsReducer, settingRef.current);
   const [isSaved, setIsSaved] = useState(false);
+  const [isError, setIsError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
   const { setMode } = useColorScheme();
 
   useEffect(() => {
-    settingRef.current = settings;
-  }, [settings]);
+    settingRef.current = state;
+  }, [state]);
 
-  const handleChange = useCallback(({ target: { name, value, checked } }) => {
-    if (name === "isExpanded" || name === "isNotificationEnabled") {
-      setSettings((prevSettings) => {
-        return { ...prevSettings, [name]: checked };
-      });
-    } else if (name === "theme") {
-      setSettings((prevSettings) => {
-        return {
-          ...prevSettings,
-          [name]: settingRef.current.theme === "dark" ? "light" : "dark",
-        };
-      });
-    } else if (name === "framerate") {
-      setSettings((prevSettings) => {
-        return { ...prevSettings, [name]: parseInt(value) };
-      });
-    } else {
-      setSettings((prevSettings) => {
-        return { ...prevSettings, [name]: value };
-      });
+  const handleChange = useCallback((action) => {
+    try {
+      dispatch(action);
+    } catch (err) {
+      if (err instanceof Error) {
+        console.error(err.message);
+        handleError(err.message);
+      }
     }
   }, []);
 
-  const handleUpdateNewSettings = useCallback(() => {
-    setIsSaved(true);
-    updateSettings(settingRef.current);
-    setMode(settingRef.current.theme);
-    setTimeout(() => handleClose(), 4000);
+  const handleSaveSettings = useCallback(() => {
+    startTransition(() => {
+      setIsSaved(true);
+      updateSettings(settingRef.current);
+      setMode(settingRef.current.theme);
+      setTimeout(() => handleCloseSaved(), 4000);
+    });
   }, []);
 
-  const handleClose = useCallback(() => {
+  const handleCloseSaved = useCallback(() => {
     setIsSaved(false);
+  }, []);
+
+  const handleCloseError = useCallback(() => {
+    setIsError(false);
+  }, []);
+
+  const handleError = useCallback((message) => {
+    setIsError(true);
+    setErrorMessage(message);
+    setTimeout(() => handleCloseError(), 4000);
   }, []);
 
   return (
@@ -74,35 +89,66 @@ const Settings = () => {
       <Sidebar />
       <PageContent>
         <Title text="การตั้งค่า" />
-        <Snackbar
-          open={isSaved}
-          autoHideDuration={4000}
-          anchorOrigin={{ vertical: "top", horizontal: "right" }}
-          onClose={handleClose}
-          slot={<Slide direction="right" />}
-          hidden={!settingRef.current.isNotificationEnabled}
-        >
-          <Alert
-            severity="success"
-            variant="standard"
-            className="absolute top-4 right-4 w-80 z-10"
-            action={
-              <IconButton
-                color="inherit"
-                size="small"
-                aria-label="close"
-                onClick={handleClose}
-              >
-                <CloseRoundedIcon fontSize="inherit" />
-              </IconButton>
-            }
+        <Stack spacing={12}>
+          <Snackbar
+            open={isSaved}
+            autoHideDuration={4000}
+            anchorOrigin={{ vertical: "top", horizontal: "right" }}
+            onClose={handleCloseSaved}
+            slot={<Slide direction="right" />}
+            hidden={!settingRef.current.isNotificationEnabled}
           >
-            <AlertTitle>
-              <span className="font-bold">แจ้งเตือน</span>
-            </AlertTitle>
-            บันทึกการตั้งค่าสำเร็จ
-          </Alert>
-        </Snackbar>
+            <Alert
+              severity="success"
+              variant="standard"
+              className="absolute top-4 right-4 w-80 z-10"
+              action={
+                <IconButton
+                  color="inherit"
+                  size="small"
+                  aria-label="close"
+                  onClick={handleCloseSaved}
+                >
+                  <CloseRoundedIcon fontSize="inherit" />
+                </IconButton>
+              }
+            >
+              <AlertTitle>
+                <span className="font-bold">แจ้งเตือน</span>
+              </AlertTitle>
+              บันทึกการตั้งค่าสำเร็จ
+            </Alert>
+          </Snackbar>
+          <Snackbar
+            open={isError}
+            autoHideDuration={4000}
+            anchorOrigin={{ vertical: "top", horizontal: "right" }}
+            onClose={handleCloseError}
+            slot={<Slide direction="right" />}
+            hidden={!settingRef.current.isNotificationEnabled}
+          >
+            <Alert
+              severity="error"
+              variant="standard"
+              className="absolute top-4 right-4 w-80 z-10"
+              action={
+                <IconButton
+                  color="inherit"
+                  size="small"
+                  aria-label="close"
+                  onClick={handleCloseError}
+                >
+                  <CloseRoundedIcon fontSize="inherit" />
+                </IconButton>
+              }
+            >
+              <AlertTitle>
+                <span className="font-bold">แจ้งเตือน</span>
+              </AlertTitle>
+              {errorMessage}
+            </Alert>
+          </Snackbar>
+        </Stack>
         <div className="mt-6 w-full grid grid-cols-2 grid-flow-row place-items-center gap-y-11 tracking-wide">
           <p>เปิดใช้งานสีธีมมืด</p>
           <FormControl>
@@ -110,11 +156,10 @@ const Settings = () => {
               <FormControlLabel
                 control={
                   <Switch
-                    name="theme"
                     color="primary"
                     size="medium"
-                    checked={settings.theme === "dark"}
-                    onChange={handleChange}
+                    checked={state.theme === "dark"}
+                    onChange={(e) => handleChange({ type: "theme", event: e })}
                   />
                 }
               />
@@ -126,11 +171,12 @@ const Settings = () => {
               <FormControlLabel
                 control={
                   <Switch
-                    name="isNotificationEnabled"
                     color="primary"
                     size="medium"
-                    checked={settings.isNotificationEnabled}
-                    onChange={handleChange}
+                    checked={state.isNotificationEnabled}
+                    onChange={(e) =>
+                      handleChange({ type: "isNotificationEnabled", event: e })
+                    }
                   />
                 }
               />
@@ -138,15 +184,14 @@ const Settings = () => {
           </FormControl>
           <p>ปรับ Frame Rate วิดีโอ</p>
           <Slider
-            name="framerate"
             marks={framerateMarks}
             step={null}
-            defaultValue={settings.framerate}
+            defaultValue={state.framerate}
             min={30}
             max={90}
             valueLabelDisplay="auto"
             color="primary"
-            onChange={handleChange}
+            onChange={(e) => handleChange({ type: "framerate", event: e })}
             sx={{ width: "300px" }}
           />
           <p>ความระเอียดของกล้องวิดีโอ</p>
@@ -160,10 +205,11 @@ const Settings = () => {
               <span>Level</span>
             </InputLabel>
             <Select
-              name="cameraResolution"
               label="Level"
-              defaultValue={settings.cameraResolution}
-              onChange={handleChange}
+              defaultValue={state.cameraResolution}
+              onChange={(e) =>
+                handleChange({ type: "cameraResolution", event: e })
+              }
             >
               {cameraResolutions.map((name) => (
                 <MenuItem key={uuid()} value={name}>
@@ -191,7 +237,7 @@ const Settings = () => {
               <InputLabel>
                 <span>Model</span>
               </InputLabel>
-              <Select label="Model" disabled defaultValue={settings.model}>
+              <Select label="Model" disabled defaultValue={state.model}>
                 {modelNames.map((name) => (
                   <MenuItem key={uuid()} value={name}>
                     {name}
@@ -205,7 +251,8 @@ const Settings = () => {
               variant="contained"
               color="primary"
               sx={{ width: "200px", height: "50px" }}
-              onClick={handleUpdateNewSettings}
+              disabled={isPending}
+              onClick={handleSaveSettings}
             >
               <SaveRoundedIcon className="me-1" />
               <span>บันทึกการตั้งค่า</span>
