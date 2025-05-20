@@ -18,7 +18,7 @@ class DeepLearning:
         self.num_classes = 2
         self.class_label = {0:"with_mask",1:"without_mask"}
         self.callback = None
-        self.color_channel = 1
+        self.color_channel = 3
 
     def __get_attribute__(self, item):
         return super(DeepLearning, self).__getattribute__(item)

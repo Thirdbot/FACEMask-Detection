@@ -33,6 +33,7 @@ class ModelLoader:
         self.initilize_class.validate_data = self.validate_data
         self.initilize_class.test_data = self.test_data
         self.initilize_class.size = self.size
+       
         
         model = self.initilize_class.model_create()
         return model
@@ -40,6 +41,8 @@ class ModelLoader:
     def select(self,model_name):
         print(f"{model_name} selected")
         self.selected = model_name
+        
+        
         func = self.import_function(self.model_function[model_name],model_name)
         class_args_key = func.__dict__.keys()
         # print(f"class_args_key: {class_args_key}")

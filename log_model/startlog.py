@@ -3,7 +3,7 @@ from wandb.integration.keras import WandbCallback
 import numpy as np
 from PIL import Image
 from pathlib import Path
-
+import cv2
 # wandb.init(config=config)
 
 
@@ -17,9 +17,16 @@ class LogModel:
         self.model_config = None
         self.dataset_config = dataset_config
         self.raw_dataset = None 
-        self.project = None
-        self.preprocessed_dataset = None
-        self.project_name = None  # Initialize project_name
+        
+        self.model_proj = None
+        self.data_proj = None
+        
+        self.data_project_name = None
+        self.model_project_name = None
+        
+        self.class_label = {0:"with_mask",1:"without_mask"}
+        self.standard_table = None
+        self.new_table = None
         
         self.sweep_configuration = {
             "method":"random",
@@ -32,7 +39,7 @@ class LogModel:
                 "DeepLearning": {
                     "parameters": {
                         "batch_size": {"values": [16,32,64]},
-                        "epochs": {"values": [10,20,30]},
+                        "epochs": {"values": [1,2,3]},
                         "optimizer": {"values": ["adam","sgd"]},
                         "lr": {"values": [0.001,0.01,0.1]}
                     }
@@ -89,8 +96,8 @@ class LogModel:
             print("Please make sure you have run 'wandb login' in your terminal")
        
     def create_project_dataset(self,project_name,dataset_name,dataset_path):
-        self.project_name = project_name
-        self.project = self.wandb.init(project=project_name,name=dataset_name)
+        self.data_project_name = project_name
+        self.data_proj = self.wandb.init(project=project_name,name=dataset_name,job_type='dataset')
          # Create and log the artifact
         artifact = self.wandb.Artifact(
             name=dataset_name,
@@ -98,17 +105,24 @@ class LogModel:
             description="Face mask detection dataset"
         )
         artifact.add_dir(str(dataset_path))
-        self.project.log_artifact(artifact)
-       
+        # self.project.log_artifact(artifact)
         
+        # Create a static table
+        self.standard_table = self.wandb.Table(columns=["image", "label"])
+        
+        
+    def create_table(self,model_name,project_name,columns):
+        self.new_table = self.wandb.init(project=project_name,name=f"{model_name}_validation", job_type='dataset')
+        self.eval_table = self.wandb.Table(columns=columns)
+                
     def create_project_model(self,project_name,model_name,model_path=None,resume=False):
-        
+        self.model_project_name = project_name
         if resume:
-            self.project= self.wandb.init(project=project_name,name=model_name,resume="allow")
+            self.model_proj= self.wandb.init(project=project_name,name=model_name,resume="allow",job_type='model')
         else:
-            self.project= self.wandb.init(project=project_name,name=model_name)
+            self.model_proj= self.wandb.init(project=project_name,name=model_name,job_type='model')
        
-        self.model_config = self.project.config        
+        self.model_config = self.model_proj.config        
         #created by sweep
         artifact = self.wandb.Artifact(
             name=model_name,
@@ -122,9 +136,9 @@ class LogModel:
 
     def load_dataset(self,dataset_name,dataset_path):
         try:
-            if self.project_name: 
+            if self.data_project_name: 
 
-                artifact = self.project.use_artifact(f"{self.project_name}/{dataset_name}:{self.version}")
+                artifact = self.data_proj.use_artifact(f"{self.data_project_name}/{dataset_name}:{self.version}")
             else:
                 raise ValueError("Project name not set. Please create project first.")
         except Exception as e:
@@ -132,14 +146,21 @@ class LogModel:
             print("Creating new dataset artifact...")
             self.raw_dataset = self.wandb.Artifact(name=dataset_name, type="dataset")
             self.raw_dataset.add_dir(name=dataset_name, local_path=str(dataset_path))
-            if self.project:
-                self.project.log_artifact(self.raw_dataset)
+            if self.data_proj:
+                self.data_proj.log_artifact(self.raw_dataset)
             
-            
-            
-            
-            
-            
+    
+    def loop_table(self,x,y):
+        for img, label in zip(x,y):
+            idx_label = np.argmax(label)
+            # img_convert = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            wandb_image = self.wandb.Image(
+                img,
+                caption=f"Label: {self.class_label[idx_label]}"
+            )
+            self.standard_table.add_data(wandb_image, str(self.class_label[idx_label]))
+        self.data_proj.log({"dataset_table": self.standard_table})
+
 
 
 

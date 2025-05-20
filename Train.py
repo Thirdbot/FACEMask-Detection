@@ -19,6 +19,7 @@ import torch
 from modelLoader import ModelLoader
 from log_model.startlog import LogModel
 import wandb
+import numpy as np
 
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
@@ -39,8 +40,11 @@ class Trainer:
         self.size =128
         self.epoch = 10
         
-        self.dataset_name = "cleaned_dataset"
-        self.project_name = "my_model"
+        self.model_project_name = "my_model"
+        self.data_project_name = "my_dataset"
+        
+        self.dataset_name = "cleaned_dataset"   
+        
         self.version = "latest"
         
         self.model_config = None
@@ -53,23 +57,30 @@ class Trainer:
         
         self.entity = self.log_model.user
         
-        self.log_model.create_project_dataset(project_name=self.project_name,dataset_name=self.dataset_name,dataset_path=dataset_path)
         
-        self.log_model.load_dataset(dataset_name=self.dataset_name,dataset_path=dataset_path)
+        
+        self.log_model.create_project_dataset(project_name=self.data_project_name,dataset_name=self.dataset_name,dataset_path=dataset_path)
+        # self.log_model.load_dataset(dataset_name=self.dataset_name,dataset_path=dataset_path)
         
         self.train_data = self.dataset_loader.train_data
         self.test_data = self.dataset_loader.test_data
         self.valid_data = self.dataset_loader.valid_data
+        self.whole_data = self.dataset_loader.whole_dataset
+        
+        
         
         ###visualization
         
+        self.whole_x,self.whole_y = self.dataset_loader.get_xy_data(self.whole_data)
+        self.log_model.loop_table(self.whole_x,self.whole_y)
+
         
         self.model_loader = ModelLoader(self.train_data,
                                         self.valid_data,
                                         self.test_data,
                                         self.size)
         
-        self.model_list = ["DeepLearning","KNNClass","DecisionClass","RFC"]
+        self.model_list = ["DeepLearning","RFC","KNNClass","DecisionClass"]
         
    
     def create_model(self,model_name,config=None):
@@ -100,13 +111,13 @@ class Trainer:
             else:
                 raise ValueError(f"Model {model_name} not found in sweep configuration")
             
-            self.sweep_id = wandb.sweep(new_sweep_config,project=self.project_name)
+            self.sweep_id = wandb.sweep(new_sweep_config,project=self.model_project_name)
             # Define the training function that will be used by the agent
             def train_func():
                 random_time = time.strftime("%Y%m%d_%H%M%S", time.localtime())
                     # Create a new run for each model
                 self.log_model.create_project_model(
-                    project_name=self.project_name,
+                    project_name=self.model_project_name,
                     model_name=f"{model_name}_sweep_{random_time}",
                     model_path=None
                 )
@@ -144,11 +155,15 @@ class Trainer:
                     "val_precision": float(score_metrics[0]),
                     "val_recall": float(score_metrics[1])
                 }
-                self.log_model.project.log(metrics)
+                self.log_model.model_proj.log(metrics)
                 
             
             # Run the agent with the training function
-            self.log_model.wandb.agent(self.sweep_id, function=train_func, count=10)
+            self.log_model.wandb.agent(self.sweep_id, function=train_func, count=2 )
+            
+            ####update table of val data
+            self.eval_dataset(model_name,self.valid_data[0],self.valid_data[1])
+                
             self.log_model.wandb.finish()
         
         # Print best models summary
@@ -176,7 +191,7 @@ class Trainer:
         self.model_loader.train(self.model)
         path = self.model_loader.save_model(self.model,model_name)
                     
-        self.log_model.create_project_model(project_name=self.project_name,model_name=model_name,model_path=path,resume=True)
+        self.log_model.create_project_model(project_name=self.model_project_name,model_name=model_name,model_path=path,resume=True)
         # self.log_model.run.log_artifact(artifact)
         eval_metrics = self.evaluate_model(model_name)
         score_metrics = self.score_model(model_name)
@@ -200,6 +215,37 @@ class Trainer:
         model = self.model_loader.load_model(model_name)
         return self.model_loader.evaluate(model)
     
+    def eval_dataset(self,model_name,test_data,test_label):
+        self.log_model.create_table(model_name,self.data_project_name,["image","true_label","pred_label","RESULT"])
+        
+        data = test_data
+        if model_name != "DeepLearning":
+            data = test_data.reshape(test_data.shape[0],-1)
+            
+        model = self.model_loader.load_model(model_name)
+        y_pred = model.predict(data)
+        
+        for x,y_pred,y_true in zip(test_data,y_pred,test_label):
+            
+            y_pred_idx = np.argmax(y_pred)
+            y_true_idx = np.argmax(y_true)
+            # Create wandb image
+            wandb_image = self.log_model.wandb.Image(
+                x,
+                caption=f"True: {self.dataset_loader.class_label[y_true_idx]}, Pred: {self.dataset_loader.class_label[y_pred_idx]}"
+            )
+            result = "Correct" if y_true_idx == y_pred_idx else "Incorrect"
+            # Add to table
+            self.log_model.eval_table.add_data(
+                wandb_image,
+                self.dataset_loader.class_label[y_true_idx],
+                self.dataset_loader.class_label[y_pred_idx],
+                result
+            )
+            
+        self.log_model.new_table.log({"eval_table": self.log_model.eval_table})
+        self.log_model.new_table.finish()
+
     def score_model(self,model_name):
         model = self.model_loader.load_model(model_name)
         return self.model_loader.score(model)
@@ -208,7 +254,7 @@ class Trainer:
         eval_dict = {}
         for model_name in self.model_list:
             self.create_model(model_name)
-            self.log_model.create_project_model(project_name=self.project_name,model_name=model_name,model_path=None,resume=True)
+            self.log_model.create_project_model(project_name=self.model_project_name,model_name=model_name,model_path=None,resume=True)
             eval_dict[model_name] = self.evaluate_model(model_name)
             self.log_model.project.log({
                 "model": model_name,
@@ -222,7 +268,7 @@ class Trainer:
         score_dict = {}
         for model_name in self.model_list:
             self.create_model(model_name)
-            self.log_model.create_project_model(project_name=self.project_name,model_name=model_name,model_path=None,resume=True)
+            self.log_model.create_project_model(project_name=self.model_project_name,model_name=model_name,model_path=None,resume=True)
 
             score_dict[model_name] = self.score_model(model_name)
             self.log_model.project.log({
