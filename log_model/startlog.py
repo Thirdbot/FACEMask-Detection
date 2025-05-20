@@ -3,14 +3,6 @@ from wandb.integration.keras import WandbCallback
 import numpy as np
 from PIL import Image
 from pathlib import Path
-config = dict(project="mask_detection", 
-              name="mask_detection_v1",
-                epochs=10,
-                batch_size=32,
-                validation_split=0.2,
-                shuffle=True,
-                # callbacks=[]
-             )
 
 # wandb.init(config=config)
 

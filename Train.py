@@ -2,22 +2,6 @@
 import os
 import re
 import time
-
-# import matplotlib.pyplot as plt
-# import matplotlib.patches as patches
-# import cv2
-# from matplotlib.pyplot import figure
-# from PIL import Image
-# import xml.etree.ElementTree as ET
-# from sklearn.preprocessing import LabelEncoder,LabelBinarizer
-# from sklearn.model_selection import train_test_split
-
-# from sklearn.ensemble import RandomForestClassifier
-
-# from sklearn.tree import DecisionTreeClassifier
-# import tensorflow as tf
-
-
 from datasetLoader import DatasetLoader
 
 from pandas import DataFrame
@@ -60,20 +44,6 @@ class Trainer:
         self.version = "latest"
         
         self.model_config = None
-        
-        
-        # Initialize wandb
-        # wandb.init(
-        #     project=self.project_name,
-        #     config={
-                
-        #         "learning_rate": 0.001,
-        #         "architecture": "CNN",
-        #         "dataset": self.dataset_name,
-        #         "epochs": self.epoch,
-        #         "batch_size": 32
-        #     }
-        # )
         
         self.dataset_loader = DatasetLoader(dataset_path=dataset_path,
                                             size=self.size,

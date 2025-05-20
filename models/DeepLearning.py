@@ -4,19 +4,18 @@ import numpy as np
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import Flatten, Dense, Dropout, Conv2D, MaxPooling2D, BatchNormalization, GlobalAveragePooling2D
 from sklearn.metrics import precision_score, recall_score, log_loss, accuracy_score
+from wandb.integration.keras import WandbMetricsLogger
+import tensorflow as tf
 
 class DeepLearning:
-    def __init__(self, save_folder):
-        self.HOME_DIR = Path(__file__).parent.parent.absolute()
-        self.save_folder = save_folder
-        self.model_name = "model.keras"
+    def __init__(self, config=None):
+        self.config = config
         
         self.size = None
         self.train_data = None
         self.validate_data = None
         self.test_data = None
         self.num_classes = 2
-        self.config = config
         self.class_label = {0:"with_mask",1:"without_mask"}
         self.callback = None
         self.color_channel = 1
