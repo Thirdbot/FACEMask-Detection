@@ -28,4 +28,5 @@ save/
 __pycache__/
 models/__pycache__/
 wandb/
-backend/models
+
+backend/models/
