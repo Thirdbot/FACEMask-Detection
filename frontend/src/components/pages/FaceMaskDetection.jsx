@@ -15,7 +15,7 @@ import AppContainer from "../containers/AppContainer";
 import Sidebar from "../ui/Sidebar";
 import PageContent from "../containers/PageContent";
 import Title from "../ui/Title";
-import { mediaStreamConstraints } from "../constants";
+import { getMediaStreamConstraints, loadSettings } from "../../utils/helper";
 
 const FaceMaskDetection = () => {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -29,6 +29,7 @@ const FaceMaskDetection = () => {
   const canvasRef = useRef();
   const intervalRef = useRef(null);
   const overlayRef = useRef();
+  const settingRef = useRef(loadSettings());
 
   useEffect(() => {
     setIsCameraAlertShown(isCameraOpen);
@@ -129,7 +130,7 @@ const FaceMaskDetection = () => {
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia(
-        mediaStreamConstraints
+        getMediaStreamConstraints()
       );
       videoRef.current.srcObject = stream;
     } catch (err) {
@@ -155,9 +156,12 @@ const FaceMaskDetection = () => {
 
       setIsDetecting(true);
       try {
-        const { data } = await axios.post("http://localhost:5000/api/mask-detection", {
-          image,
-        });
+        const { data } = await axios.post(
+          "http://localhost:5000/api/mask-detection",
+          {
+            image,
+          }
+        );
         setFaces(data.results || []);
       } catch (err) {
         if (err instanceof Error) {
@@ -205,6 +209,7 @@ const FaceMaskDetection = () => {
             anchorOrigin={{ vertical: "top", horizontal: "right" }}
             onClose={handleCloseCameraAlert}
             slot={<Slide direction="right" />}
+            hidden={!settingRef.current.isNotificationEnabled}
           >
             <Alert
               severity="info"
@@ -232,6 +237,7 @@ const FaceMaskDetection = () => {
             anchorOrigin={{ vertical: "top", horizontal: "right" }}
             onClose={handleCloseErrorAlert}
             slot={<Slide direction="right" />}
+            hidden={!settingRef.current.isNotificationEnabled}
           >
             <Alert
               severity="error"

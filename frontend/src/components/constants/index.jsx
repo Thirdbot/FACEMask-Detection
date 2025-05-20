@@ -73,15 +73,6 @@ export const membersData = [
 
 export const modelNames = ["Deep Learning (CNN)"];
 
-export const mediaStreamConstraints = {
-  video: {
-    width: { min: 854, ideal: 1280, max: 1920 },
-    height: { min: 480, ideal: 720, max: 1080 },
-    frameRate: { min: 30, ideal: 60, max: 90 },
-  },
-  audio: false,
-};
-
 export const framerateMarks = [
   {
     value: 30,
@@ -100,9 +91,12 @@ export const framerateMarks = [
 export const cameraResolutions = ["SD", "HD", "Full HD"];
 
 export const defaultSettings = {
-  defaultTheme: localStorage.getItem("theme"),
-  defaultNotification: true,
-  defaultFramerate: 60,
-  defaultCameraResolution: "HD",
-  defaultModel: "Deep Learning (CNN)",
+  theme: window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light",
+  isExpanded: true,
+  isNotificationEnabled: true,
+  framerate: 60,
+  cameraResolution: "HD",
+  model: "Deep Learning (CNN)",
 };

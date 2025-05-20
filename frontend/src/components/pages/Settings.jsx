@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useColorScheme } from "@mui/material/styles";
 import Switch from "@mui/material/Switch";
 import FormControl from "@mui/material/FormControl";
@@ -9,53 +9,64 @@ import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Button from "@mui/material/Button";
 import Slider from "@mui/material/Slider";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
+import AlertTitle from "@mui/material/AlertTitle";
+import IconButton from "@mui/material/IconButton";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import Slide from "@mui/material/Slide";
+import Tooltip from "@mui/material/Tooltip";
 import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
 import uuid from "react-uuid";
 import AppContainer from "../containers/AppContainer";
 import PageContent from "../containers/PageContent";
 import Sidebar from "../ui/Sidebar";
 import Title from "../ui/Title";
-import {
-  modelNames,
-  framerateMarks,
-  cameraResolutions,
-  defaultSettings,
-} from "../constants";
+import { modelNames, framerateMarks, cameraResolutions } from "../constants";
+import { updateSettings, loadSettings } from "../../utils/helper";
 
 const Settings = () => {
-  const [isDarkMode, setIsDarkMode] = useState(
-    localStorage.getItem("theme") === "dark"
-  );
+  const settingRef = useRef(loadSettings());
+  const [settings, setSettings] = useState(settingRef.current);
+  const [isSaved, setIsSaved] = useState(false);
   const { setMode } = useColorScheme();
-  const [isNotificationEnabled, setIsNotificationEnabled] = useState(
-    defaultSettings.defaultNotification
-  );
-  const [framerateValue, setFramerateValue] = useState(
-    defaultSettings.defaultFramerate
-  );
-  const [cameraResolutionLevel, setCameraResolutionLevel] = useState(
-    defaultSettings.defaultCameraResolution
-  );
 
   useEffect(() => {
-    console.log(framerateValue);
-    console.log(cameraResolutionLevel);
-  }, [framerateValue, cameraResolutionLevel]);
+    settingRef.current = settings;
+  }, [settings]);
 
-  const handleChangeTheme = useCallback(({ target: { checked } }) => {
-    const currentTheme =
-      localStorage.getItem("theme") === "dark" ? "light" : "dark";
-    setIsDarkMode(checked);
-    setMode(currentTheme);
-    localStorage.setItem("theme", currentTheme);
+  const handleChange = useCallback(({ target: { name, value, checked } }) => {
+    if (name === "isExpanded" || name === "isNotificationEnabled") {
+      setSettings((prevSettings) => {
+        return { ...prevSettings, [name]: checked };
+      });
+    } else if (name === "theme") {
+      setSettings((prevSettings) => {
+        return {
+          ...prevSettings,
+          [name]: settingRef.current.theme === "dark" ? "light" : "dark",
+        };
+      });
+    } else if (name === "framerate") {
+      setSettings((prevSettings) => {
+        return { ...prevSettings, [name]: parseInt(value) };
+      });
+    } else {
+      setSettings((prevSettings) => {
+        return { ...prevSettings, [name]: value };
+      });
+    }
   }, []);
 
-  const handleChangeFramerate = useCallback(({ target: { value } }) => {
-    setFramerateValue(value);
+  const handleUpdateNewSettings = useCallback(() => {
+    setIsSaved(true);
+    updateSettings(settingRef.current);
+    setMode(settingRef.current.theme);
+    setTimeout(() => handleClose(), 4000);
   }, []);
 
-  const handleChangeResolution = useCallback(({ target: { value } }) => {
-    setCameraResolutionLevel(value);
+  const handleClose = useCallback(() => {
+    setIsSaved(false);
   }, []);
 
   return (
@@ -63,6 +74,35 @@ const Settings = () => {
       <Sidebar />
       <PageContent>
         <Title text="การตั้งค่า" />
+        <Snackbar
+          open={isSaved}
+          autoHideDuration={4000}
+          anchorOrigin={{ vertical: "top", horizontal: "right" }}
+          onClose={handleClose}
+          slot={<Slide direction="right" />}
+          hidden={!settingRef.current.isNotificationEnabled}
+        >
+          <Alert
+            severity="success"
+            variant="standard"
+            className="absolute top-4 right-4 w-80 z-10"
+            action={
+              <IconButton
+                color="inherit"
+                size="small"
+                aria-label="close"
+                onClick={handleClose}
+              >
+                <CloseRoundedIcon fontSize="inherit" />
+              </IconButton>
+            }
+          >
+            <AlertTitle>
+              <span className="font-bold">แจ้งเตือน</span>
+            </AlertTitle>
+            บันทึกการตั้งค่าสำเร็จ
+          </Alert>
+        </Snackbar>
         <div className="mt-6 w-full grid grid-cols-2 grid-flow-row place-items-center gap-y-11 tracking-wide">
           <p>เปิดใช้งานสีธีมมืด</p>
           <FormControl>
@@ -70,10 +110,11 @@ const Settings = () => {
               <FormControlLabel
                 control={
                   <Switch
+                    name="theme"
                     color="primary"
                     size="medium"
-                    checked={isDarkMode}
-                    onChange={handleChangeTheme}
+                    checked={settings.theme === "dark"}
+                    onChange={handleChange}
                   />
                 }
               />
@@ -85,9 +126,11 @@ const Settings = () => {
               <FormControlLabel
                 control={
                   <Switch
+                    name="isNotificationEnabled"
                     color="primary"
                     size="medium"
-                    checked={isNotificationEnabled}
+                    checked={settings.isNotificationEnabled}
+                    onChange={handleChange}
                   />
                 }
               />
@@ -95,14 +138,15 @@ const Settings = () => {
           </FormControl>
           <p>ปรับ Frame Rate วิดีโอ</p>
           <Slider
+            name="framerate"
             marks={framerateMarks}
             step={null}
-            defaultValue={framerateValue}
+            defaultValue={settings.framerate}
             min={30}
             max={90}
             valueLabelDisplay="auto"
             color="primary"
-            onChange={handleChangeFramerate}
+            onChange={handleChange}
             sx={{ width: "300px" }}
           />
           <p>ความระเอียดของกล้องวิดีโอ</p>
@@ -116,9 +160,10 @@ const Settings = () => {
               <span>Level</span>
             </InputLabel>
             <Select
+              name="cameraResolution"
               label="Level"
-              defaultValue={cameraResolutionLevel}
-              onChange={handleChangeResolution}
+              defaultValue={settings.cameraResolution}
+              onChange={handleChange}
             >
               {cameraResolutions.map((name) => (
                 <MenuItem key={uuid()} value={name}>
@@ -128,32 +173,39 @@ const Settings = () => {
             </Select>
           </FormControl>
           <p>เลือก AI Model ที่จะใช้งาน</p>
-          <FormControl
-            color="primary"
-            sx={{
-              width: "250px",
-            }}
+          <Tooltip
+            title={
+              <span>
+                ไม่สามารถเลือก Model ได้เนื่องจากมีแค่ Model เดียวที่ใช้งานได้
+              </span>
+            }
+            placement="bottom"
+            arrow
           >
-            <InputLabel>
-              <span>Model</span>
-            </InputLabel>
-            <Select
-              label="Model"
-              disabled
-              defaultValue={defaultSettings.defaultModel}
+            <FormControl
+              color="primary"
+              sx={{
+                width: "250px",
+              }}
             >
-              {modelNames.map((name) => (
-                <MenuItem key={uuid()} value={name}>
-                  {name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+              <InputLabel>
+                <span>Model</span>
+              </InputLabel>
+              <Select label="Model" disabled defaultValue={settings.model}>
+                {modelNames.map((name) => (
+                  <MenuItem key={uuid()} value={name}>
+                    {name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Tooltip>
           <div className="col-span-2">
             <Button
               variant="contained"
               color="primary"
               sx={{ width: "200px", height: "50px" }}
+              onClick={handleUpdateNewSettings}
             >
               <SaveRoundedIcon className="me-1" />
               <span>บันทึกการตั้งค่า</span>

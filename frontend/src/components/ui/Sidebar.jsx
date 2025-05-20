@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import uuid from "react-uuid";
 import TableRowsRoundedIcon from "@mui/icons-material/TableRowsRounded";
 import ArrowForwardIosRoundedIcon from "@mui/icons-material/ArrowForwardIosRounded";
@@ -11,21 +11,20 @@ import Menu from "../containers/Menu";
 import MenuItem from "./MenuItem";
 import HorizontalLine from "./HorizontalLine";
 import { menuItems } from "../constants";
-import { isTrue } from "../../utils/helper";
+import { updateSettings } from "../../utils/helper";
+import { loadSettings } from "../../utils/helper";
 
 const Sidebar = () => {
-  const [isExpanded, setIsExpanded] = useState(
-    localStorage.getItem("isExpanded") !== null
-      ? isTrue(localStorage.getItem("isExpanded"))
-      : true
-  );
+  const defaultSettings = loadSettings();
+  const [isExpanded, setIsExpanded] = useState(defaultSettings.isExpanded);
   const [year, setYear] = useState(new Date().getFullYear());
 
-  const handleToggle = useCallback((e) => {
-    setIsExpanded((prev) => {
-      localStorage.setItem("isExpanded", String(!prev));
-      return !prev;
-    });
+  useEffect(() => {
+    updateSettings({ ...defaultSettings, isExpanded: isExpanded });
+  }, [isExpanded]);
+
+  const handleToggle = useCallback(() => {
+    setIsExpanded((prev) => !prev);
   }, []);
 
   return (
@@ -60,7 +59,7 @@ const Sidebar = () => {
         <Menu className="mt-6 w-full">
           {menuItems.map(({ text, icon, pathname }) => (
             <NavLink to={pathname} key={uuid()}>
-              <MenuItem text={text} icon={icon} pathname={pathname} />
+              <MenuItem text={text} icon={icon} pathname={pathname} isExpanded={isExpanded} />
             </NavLink>
           ))}
         </Menu>
