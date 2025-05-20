@@ -8,7 +8,7 @@ import joblib
 
 from wandb.integration.keras import WandbMetricsLogger
 class ModelLoader:
-    def __init__(self,train,validation,size) -> None:
+    def __init__(self,train,validation,test,size) -> None:
         self.model_function = {
             "DeepLearning":"models.DeepLearning",
             "DecisionClass":"models.DecisionClass",
@@ -20,6 +20,7 @@ class ModelLoader:
         self.selected = None
         self.train_data = train
         self.validate_data = validation
+        self.test_data = test
         self.size = size
         self.initilize_class = None
         self.config = {}
@@ -30,6 +31,7 @@ class ModelLoader:
         self.initilize_class = self.runfunc(model_calling,config)
         self.initilize_class.train_data = self.train_data
         self.initilize_class.validate_data = self.validate_data
+        self.initilize_class.test_data = self.test_data
         self.initilize_class.size = self.size
         
         model = self.initilize_class.model_create()

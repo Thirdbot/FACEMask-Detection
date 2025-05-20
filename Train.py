@@ -1,6 +1,7 @@
 # นำเข้า modules ของ libraries
 import os
 import re
+import time
 
 # import matplotlib.pyplot as plt
 # import matplotlib.patches as patches
@@ -58,17 +59,21 @@ class Trainer:
         self.project_name = "my_model"
         self.version = "latest"
         
+        self.model_config = None
+        
+        
         # Initialize wandb
-        wandb.init(
-            project=self.project_name,
-            config={
-                "learning_rate": 0.001,
-                "architecture": "CNN",
-                "dataset": self.dataset_name,
-                "epochs": self.epoch,
-                "batch_size": 32
-            }
-        )
+        # wandb.init(
+        #     project=self.project_name,
+        #     config={
+                
+        #         "learning_rate": 0.001,
+        #         "architecture": "CNN",
+        #         "dataset": self.dataset_name,
+        #         "epochs": self.epoch,
+        #         "batch_size": 32
+        #     }
+        # )
         
         self.dataset_loader = DatasetLoader(dataset_path=dataset_path,
                                             size=self.size,
@@ -82,99 +87,121 @@ class Trainer:
         
         self.log_model.load_dataset(dataset_name=self.dataset_name,dataset_path=dataset_path)
         
-        self.train_data,self.validation_data = self.dataset_loader.get_train_test_data()
+        self.train_data = self.dataset_loader.train_data
+        self.test_data = self.dataset_loader.test_data
+        self.valid_data = self.dataset_loader.valid_data
         
-        self.raw_train,self.raw_val = self.dataset_loader.get_raw_train_test_data()
+        ###visualization
         
         
         self.model_loader = ModelLoader(self.train_data,
-                                        self.validation_data,
+                                        self.valid_data,
+                                        self.test_data,
                                         self.size)
         
-        self.model_list = ["KNNClass","DecisionClass","DeepLearning","RFC"]
+        self.model_list = ["DeepLearning","KNNClass","DecisionClass","RFC"]
         
-        
-        self.deeplearning_config = dict(
-            epochs=10,
-            batch_size=32,
-            validation_split=0.2,
-            shuffle=True,
-            # callbacks=[]
-            )
-        self.knn_config = dict(
-            n_neighbors=5,
-            weights="uniform",
-            algorithm="auto",
-            leaf_size=30,
-            p=2,
-            metric="minkowski",
-            )
-        self.decision_config = dict(
-            criterion="gini",
-            splitter="best",
-            max_depth=None,
-            min_samples_split=2,
-            min_samples_leaf=1,
-            max_features="sqrt",
-            )
-        self.rfc_config = dict(
-            n_estimators=100,
-            max_depth=None,
-            criterion="gini",
-            min_samples_split=2,
-            min_samples_leaf=1,
-            max_features="sqrt",
-            )
+   
+    def create_model(self,model_name,config=None):
             
-        self.config = {"DeepLearning":self.deeplearning_config,
-                       "KNNClass":self.knn_config,
-                       "DecisionClass":self.decision_config,
-                       "RFC":self.rfc_config
-                       }
         
-        
-    def create_model(self,model_name):
-        self.model_loader.config = self.config[model_name]
         #select model from lib and model_name
         model_func = self.model_loader.select(model_name)
         #call model instance and pass config as create model
-        self.model = self.model_loader.create_model(model_func,self.config[model_name])
+        self.model = self.model_loader.create_model(model_func,config)
     
     def train_all(self):
+        best_models = {}
+        best_scores = {}
+        
         for model_name in self.model_list:
+           
             print(f"Training {model_name}...")
-            self.create_model(model_name)
+
+            self.log_model.sweep_configuration.update({'name':model_name})
+            sweep_config = self.log_model.sweep_configuration
             
-            # Create a new run for each model
-            self.log_model.create_project_model(
-                project_name=self.project_name,
-                model_name=model_name,
-                model_path=None,
-                resume=True
-            )
+            new_sweep_config = {}
+            if sweep_config['parameters'][model_name]:
+                new_sweep_config['method'] = sweep_config['method']
+                new_sweep_config['name'] = sweep_config['name']
+                new_sweep_config['metric'] = sweep_config['metric']
+                new_sweep_config['parameters'] = sweep_config['parameters'][model_name]['parameters']
+            else:
+                raise ValueError(f"Model {model_name} not found in sweep configuration")
             
-            # Train the model
-            self.model_loader.train(self.model)
+            self.sweep_id = wandb.sweep(new_sweep_config,project=self.project_name)
+            # Define the training function that will be used by the agent
+            def train_func():
+                random_time = time.strftime("%Y%m%d_%H%M%S", time.localtime())
+                    # Create a new run for each model
+                self.log_model.create_project_model(
+                    project_name=self.project_name,
+                    model_name=f"{model_name}_sweep_{random_time}",
+                    model_path=None
+                )
+                self.create_model(model_name, self.log_model.model_config)
+                # Train the model
+                
+                self.model_loader.train(self.model)
+                self.model_loader.save_model(self.model, model_name)
+                
+                # Evaluate
+                eval_metrics = self.evaluate_model(model_name)
+                score_metrics = self.score_model(model_name)
+                
+                # Track best model for this model type
+                if model_name not in best_scores or eval_metrics[0] > best_scores[model_name]:
+    
+                    model_path = self.model_loader.save_model(self.model, model_name)
+                    best_scores[model_name] = eval_metrics[0]
+                    best_models[model_name] = {
+                        'model_path': model_path,
+                        'metrics': {
+                            'accuracy': eval_metrics[0],
+                            'loss': eval_metrics[1],
+                            'precision': score_metrics[0],
+                            'recall': score_metrics[1]
+                        },
+                        'config': self.log_model.model_config
+                    }
+                    
+                
+                # Log metrics with consistent naming
+                metrics = {
+                    "val_accuracy": float(eval_metrics[0]),  # Ensure float values
+                    "val_loss": float(eval_metrics[1]),
+                    "val_precision": float(score_metrics[0]),
+                    "val_recall": float(score_metrics[1])
+                }
+                self.log_model.project.log(metrics)
+                
             
-            # Save the model
-            path = self.model_loader.save_model(self.model, model_name)
-            
-            # Evaluate and log metrics before finishing the run
-            eval_metrics = self.evaluate_model(model_name)
-            score_metrics = self.score_model(model_name)
-            
-            # Log all metrics
-            self.log_model.project.log({
-                "model": model_name,
-                "val_accuracy": eval_metrics[0],
-                "val_loss": eval_metrics[1],
-                "val_precision": score_metrics[0],
-                "val_recall": score_metrics[1]
-            })
-            
-            # Finish the run after all logging is done
-        self.log_model.project.finish()
-            
+            # Run the agent with the training function
+            self.log_model.wandb.agent(self.sweep_id, function=train_func, count=10)
+            self.log_model.wandb.finish()
+        
+        # Print best models summary
+        print("\nBest Models Summary:")
+        for model_name, model_info in best_models.items():
+            print(f"\n{model_name}:")
+            print(f"Best Accuracy: {model_info['metrics']['accuracy']:.4f}")
+            print(f"Loss: {model_info['metrics']['loss']:.4f}")
+            print(f"Precision: {model_info['metrics']['precision']:.4f}")
+            print(f"Recall: {model_info['metrics']['recall']:.4f}")
+            print(f"Model saved at: {model_info['model_path']}")
+            print("Best Configuration:")
+            for param, value in model_info['config'].items():
+                print(f"  {param}: {value}")
+        
+        # Find overall best model
+        best_overall = max(best_models.items(), key=lambda x: x[1]['metrics']['accuracy'])
+        print(f"\nOverall Best Model: {best_overall[0]}")
+        print(f"Best Accuracy: {best_overall[1]['metrics']['accuracy']:.4f}")
+        print(f"Model saved at: {best_overall[1]['model_path']}")
+        
+        return best_models
+    
     def train(self,model_name):
         self.model_loader.train(self.model)
         path = self.model_loader.save_model(self.model,model_name)
@@ -185,6 +212,7 @@ class Trainer:
         score_metrics = self.score_model(model_name)
         
         # Log all metrics
+        
         self.log_model.project.log({
             "model": model_name,
             "val_accuracy": eval_metrics[0],
