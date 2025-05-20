@@ -4,8 +4,6 @@ import cv2
 import numpy as np
 import torch
 from torchvision import datasets, transforms
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from torchvision.datasets import ImageFolder
 from torch.utils.data import DataLoader, random_split
 from sklearn.model_selection import train_test_split
 import tensorflow as tf
@@ -13,7 +11,7 @@ import pandas as pd
 from pathlib import Path
 
 class DatasetLoader:
-    def __init__(self, dataset_path, size, batch_size=2):
+    def __init__(self, dataset_path, size, batch_size=1):
         self.datasetpath = dataset_path
         self.size = size
         self.batch_size = batch_size

@@ -2,17 +2,15 @@ import os
 from pathlib import Path
 import numpy as np
 from tensorflow.keras.models import Sequential, load_model
-from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 from tensorflow.keras.layers import Flatten, Dense, Dropout, Conv2D, MaxPooling2D, BatchNormalization, GlobalAveragePooling2D
 from sklearn.metrics import precision_score, recall_score, log_loss, accuracy_score
-import torch
-# from wandb.keras import WandbCallback
-from wandb.integration.keras import WandbMetricsLogger
-import wandb
-import tensorflow as tf
 
 class DeepLearning:
-    def __init__(self,config=None):        
+    def __init__(self, save_folder):
+        self.HOME_DIR = Path(__file__).parent.parent.absolute()
+        self.save_folder = save_folder
+        self.model_name = "model.keras"
+        
         self.size = None
         self.train_data = None
         self.validate_data = None
@@ -30,7 +28,6 @@ class DeepLearning:
         return super(DeepLearning, self).__setattr__(self, item, None)
     
     def model_create(self):
-        
         # สร้าง object ของ model
         model = Sequential()
 
@@ -62,7 +59,7 @@ class DeepLearning:
         model.add(Dropout(0.5))
         model.add(Dense(512, activation='relu'))
         model.add(Dropout(0.5))
-        model.add(Dense(self.num_classes, activation='softmax'))
+        model.add(Dense(3, activation='softmax'))
         
         # # # print(model.summary())
         
