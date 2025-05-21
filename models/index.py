@@ -99,6 +99,6 @@ model.fit(datagen.flow(x_train, y_train, batch_size=16), epochs=14, validation_d
 
 model.evaluate(x_test, y_test)
 
-model.save('Full_modelRGB.h5')
+model.save('Face_mask_detection.hdf5')
 
 model = load_model("Full_modelRGB.h5")
