@@ -5,7 +5,7 @@ from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 from cv2 import CascadeClassifier
 
 # Load model and initialize parameters
-MODEL_PATH = "mask_detector.keras"  # Use the original model
+MODEL_PATH = "mask_detector.h5"  # Use the original model
 model = load_model(MODEL_PATH, compile=False)  # Disable loading the optimizer configuration
 
 IMG_SIZE = (224, 224)  # Update to match the model's expected input size
@@ -38,14 +38,10 @@ while True:
         # Predict mask
         mask_prob = model.predict(face)[0][0]  
         without_mask_prob = 1 - mask_prob  
-        label = "No Mask" if mask_prob > without_mask_prob else "Mask"  # Reversed logic
+        label = "Mask" if mask_prob > without_mask_prob else "No Mask"  
         confidence = max(mask_prob, without_mask_prob)
 
-        # Skip if confidence is lower than 85%
-        if confidence < 0.85:
-            continue
-
-        color = (0, 0, 255) if label == "No Mask" else (0, 255, 0)  # Red for No Mask, Green for Mask
+        color = (0, 0, 255) if label == "Mask" else (0, 255, 0)  # Red for No Mask, Green for Mask
 
         # Draw bounding box and label with confidence
         cv2.rectangle(frame, (x, y), (x+w, y+h), color, 2)

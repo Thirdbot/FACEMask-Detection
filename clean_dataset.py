@@ -8,9 +8,9 @@ from imutils import paths
 from tqdm import tqdm
 
 # Constants
-DATASET_PATH = "dataset/Train"
+DATASET_PATH = "dataset"
 CLEANED_PATH = "dataset/cleaned"
-CATEGORIES = ["WithMask", "WithoutMask"]
+CATEGORIES = ["with_mask", "without_mask"]
 IMG_SIZE = (224, 224)
 BLURRY_THRESHOLD = 100.0
 MIN_RESOLUTION = 50

@@ -8,10 +8,11 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.utils.class_weight import compute_class_weight
 
 # --- Configuration ---
-DATA_DIR = "dataset/cleaned"  # contains subfolders 'with_mask', 'without_mask'
-MODEL_PATH = "mask_detector.keras"  # Use the newer .keras format
+DATA_DIR = "dataset/cleaned" 
+MODEL_PATH = "mask_detector.h5"  
 PLOT_PATH = "training_plot.png"
 INIT_LR = 1e-4
 EPOCHS = 13
@@ -22,11 +23,11 @@ VALIDATION_SPLIT = 0.2
 # --- Data Generators ---
 train_aug = ImageDataGenerator(
     rescale=1./255,
-    rotation_range=20,
-    zoom_range=0.15,
-    width_shift_range=0.2,
-    height_shift_range=0.2,
-    shear_range=0.15,
+    rotation_range=30,  # Increased rotation
+    zoom_range=0.2,     # Increased zoom
+    width_shift_range=0.3,  # Increased width shift
+    height_shift_range=0.3,  # Increased height shift
+    shear_range=0.2,    # Increased shear
     horizontal_flip=True,
     fill_mode="nearest",
     validation_split=VALIDATION_SPLIT
@@ -57,7 +58,7 @@ head = baseModel.output
 head = AveragePooling2D(pool_size=(7, 7))(head)
 head = Flatten()(head)
 head = Dense(128, activation="relu")(head)
-head = Dropout(0.5)(head)
+head = Dropout(0.6)(head)  # Increased dropout rate to 0.6
 head = Dense(1, activation="sigmoid")(head)
 
 model = Model(inputs=baseModel.input, outputs=head)
@@ -72,19 +73,25 @@ model.compile(loss="binary_crossentropy", optimizer=opt, metrics=["accuracy"])
 
 # Callbacks
 callbacks = [
-    EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True),
-    ModelCheckpoint(MODEL_PATH, monitor='val_loss', save_best_only=True),  # Removed save_format
-    ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=3, min_lr=1e-6)
+    EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True),  # Increased patience
+    ModelCheckpoint(MODEL_PATH, monitor='val_loss', save_best_only=True),
+    ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=5, min_lr=1e-6)  # Adjusted patience
 ]
-
-# Adjust class weights
-class_weights = {0: 1.0, 1: 2.0}  # Adjust weights based on class distribution
 
 # Fine-tune the model
 for layer in baseModel.layers[-20:]:  # Unfreeze the last 20 layers
     layer.trainable = True
-opt = Adam(learning_rate=INIT_LR / 10)  # Lower learning rate
+opt = Adam(learning_rate=INIT_LR / 20)  # Reduced learning rate further
 model.compile(loss="binary_crossentropy", optimizer=opt, metrics=["accuracy"])
+
+# Compute class weights
+class_labels = np.array(list(train_gen.class_indices.values()))  # Convert to numpy array
+class_weights_array = compute_class_weight(
+    class_weight='balanced',
+    classes=class_labels,
+    y=train_gen.classes
+)
+class_weights = dict(zip(class_labels, class_weights_array))
 
 # --- Train ---
 H = model.fit(
