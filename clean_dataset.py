@@ -1,62 +1,88 @@
 import os
 import cv2
+import shutil
+import imagehash
+import numpy as np
+from PIL import Image
 from imutils import paths
 from tqdm import tqdm
 
-# Initialize paths
-DATASET_PATH = "dataset/data"
-CATEGORIES = ["with_mask", "without_mask"]
-IMG_SIZE = (224, 224)  # Ensure all images are resized to this size
+# Constants
+DATASET_PATH = "dataset/Train"
+CLEANED_PATH = "dataset/cleaned"
+CATEGORIES = ["WithMask", "WithoutMask"]
+IMG_SIZE = (224, 224)
+BLURRY_THRESHOLD = 100.0
+MIN_RESOLUTION = 50
 
+# Track hashes
+seen_hashes = set()
+
+# Helper functions
 def is_low_quality(image_path):
-    """Check if an image is low quality (e.g., too small or blurry)."""
     image = cv2.imread(image_path)
     if image is None:
         return True
     h, w = image.shape[:2]
-    return h < 50 or w < 50  # Example threshold for low resolution
+    return h < MIN_RESOLUTION or w < MIN_RESOLUTION
 
-def resize_image(image_path):
-    """Resize an image to the target size."""
+def is_blurry(image_path, threshold=BLURRY_THRESHOLD):
+    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    if image is None:
+        return True
+    variance = cv2.Laplacian(image, cv2.CV_64F).var()
+    return variance < threshold
+
+def get_perceptual_hash(image_path):
+    try:
+        image = Image.open(image_path).convert("L")
+        return str(imagehash.phash(image))
+    except Exception:
+        return None
+
+def normalize_and_resize(image_path):
     image = cv2.imread(image_path)
-    if image is not None:
-        resized = cv2.resize(image, IMG_SIZE)
-        cv2.imwrite(image_path, resized)
+    if image is None:
+        return None
+    h, w = image.shape[:2]
+    if h > w:
+        pad = (h - w) // 2
+        image = cv2.copyMakeBorder(image, 0, 0, pad, pad, cv2.BORDER_CONSTANT, value=[0, 0, 0])
+    elif w > h:
+        pad = (w - h) // 2
+        image = cv2.copyMakeBorder(image, pad, pad, 0, 0, cv2.BORDER_CONSTANT, value=[0, 0, 0])
+    return cv2.resize(image, IMG_SIZE)
 
 def clean_dataset():
-    """Remove duplicates, low-quality images, and resize all images."""
-    total_removed = 0
+    if os.path.exists(CLEANED_PATH):
+        shutil.rmtree(CLEANED_PATH)
+    os.makedirs(CLEANED_PATH)
+
     for category in CATEGORIES:
-        print(f"[INFO] Cleaning category: {category}")
-        category_path = os.path.join(DATASET_PATH, category)
-        image_paths = list(paths.list_images(category_path))
-        hashes = set()
+        print(f"[INFO] Processing: {category}")
+        input_dir = os.path.join(DATASET_PATH, category)
+        output_dir = os.path.join(CLEANED_PATH, category)
+        os.makedirs(output_dir, exist_ok=True)
+
+        image_paths = list(paths.list_images(input_dir))
 
         for image_path in tqdm(image_paths):
             try:
-                # Check for low-quality images
-                if is_low_quality(image_path):
-                    os.remove(image_path)
-                    total_removed += 1
+                # Normalize and resize
+                clean_img = normalize_and_resize(image_path)
+                if clean_img is None:
+                    print(f"[SKIPPED] Failed to read: {image_path}")
                     continue
 
-                # Check for duplicates using hash
-                image = cv2.imread(image_path)
-                image_hash = hash(image.tobytes())
-                if image_hash in hashes:
-                    os.remove(image_path)
-                    total_removed += 1
-                else:
-                    hashes.add(image_hash)
-                    # Resize the image
-                    resize_image(image_path)
-            except Exception as e:
-                print(f"[WARNING] Skipping corrupted image: {image_path} ({e})")
-                os.remove(image_path)
-                total_removed += 1
+                # Save to cleaned dir
+                filename = os.path.basename(image_path)
+                save_path = os.path.join(output_dir, filename)
+                cv2.imwrite(save_path, clean_img)
 
-    print(f"[INFO] Total images removed: {total_removed}")
+            except Exception as e:
+                print(f"[ERROR] Skipping corrupted: {image_path} ({e})")
+
+    print(f"[DONE] Resizing complete.")
 
 if __name__ == "__main__":
     clean_dataset()
-    print("[INFO] Dataset cleaning and resizing complete.")

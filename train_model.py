@@ -1,87 +1,130 @@
 import os
 import numpy as np
+import matplotlib.pyplot as plt
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.applications import MobileNetV2
 from tensorflow.keras.layers import AveragePooling2D, Dropout, Flatten, Dense, Input
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelBinarizer
-from sklearn.metrics import classification_report
-import matplotlib.pyplot as plt
-import pickle
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
+from sklearn.metrics import classification_report, confusion_matrix
 
-# Initialize paths and parameters
-DATASET_PATH = "dataset/data"
+# --- Configuration ---
+DATA_DIR = "dataset/cleaned"  # contains subfolders 'with_mask', 'without_mask'
+MODEL_PATH = "mask_detector.keras"  # Use the newer .keras format
+PLOT_PATH = "training_plot.png"
 INIT_LR = 1e-4
-EPOCHS = 15
+EPOCHS = 13
 BATCH_SIZE = 32
 IMG_SIZE = (224, 224)
+VALIDATION_SPLIT = 0.2
 
-# Load and preprocess dataset
-print("[INFO] Loading images...")
-categories = ["with_mask", "without_mask"]
-data, labels = [], []
+# --- Data Generators ---
+train_aug = ImageDataGenerator(
+    rescale=1./255,
+    rotation_range=20,
+    zoom_range=0.15,
+    width_shift_range=0.2,
+    height_shift_range=0.2,
+    shear_range=0.15,
+    horizontal_flip=True,
+    fill_mode="nearest",
+    validation_split=VALIDATION_SPLIT
+)
 
-for category in categories:
-    path = os.path.join(DATASET_PATH, category)
-    for img_name in os.listdir(path):
-        img_path = os.path.join(path, img_name)
-        image = plt.imread(img_path)
-        image = np.resize(image, (*IMG_SIZE, 3)) / 255.0
-        data.append(image)
-        labels.append(category)
+train_gen = train_aug.flow_from_directory(
+    DATA_DIR,
+    target_size=IMG_SIZE,
+    batch_size=BATCH_SIZE,
+    class_mode="binary",
+    subset="training",
+    shuffle=True
+)
 
-# Convert to NumPy arrays and encode labels
-data = np.array(data, dtype="float32")
-labels = np.array(labels)
-lb = LabelBinarizer()
-labels = lb.fit_transform(labels)
-labels = np.hstack((labels, 1 - labels))
+val_gen = train_aug.flow_from_directory(
+    DATA_DIR,
+    target_size=IMG_SIZE,
+    batch_size=BATCH_SIZE,
+    class_mode="binary",
+    subset="validation",
+    shuffle=False
+)
 
-# Split data
-(trainX, testX, trainY, testY) = train_test_split(data, labels, test_size=0.2, stratify=labels, random_state=42)
+# --- Build Model ---
+baseModel = MobileNetV2(weights="imagenet", include_top=False,
+                        input_tensor=Input(shape=(*IMG_SIZE, 3)))
+head = baseModel.output
+head = AveragePooling2D(pool_size=(7, 7))(head)
+head = Flatten()(head)
+head = Dense(128, activation="relu")(head)
+head = Dropout(0.5)(head)
+head = Dense(1, activation="sigmoid")(head)
 
-# Data augmentation
-aug = ImageDataGenerator(rotation_range=20, zoom_range=0.15, width_shift_range=0.2,
-                         height_shift_range=0.2, shear_range=0.15, horizontal_flip=True, fill_mode="nearest")
+model = Model(inputs=baseModel.input, outputs=head)
 
-# Build model
-baseModel = MobileNetV2(weights="imagenet", include_top=False, input_tensor=Input(shape=(*IMG_SIZE, 3)))
-headModel = baseModel.output
-headModel = AveragePooling2D(pool_size=(7, 7))(headModel)
-headModel = Flatten()(headModel)
-headModel = Dense(128, activation="relu")(headModel)
-headModel = Dropout(0.5)(headModel)
-headModel = Dense(2, activation="softmax")(headModel)
-
-model = Model(inputs=baseModel.input, outputs=headModel)
-
-# Freeze base model layers
+# Freeze base layers
 for layer in baseModel.layers:
     layer.trainable = False
 
-# Compile model
-print("[INFO] Compiling model...")
-opt = Adam(learning_rate=INIT_LR, decay=INIT_LR / EPOCHS)
+# Compile
+opt = Adam(learning_rate=INIT_LR)
 model.compile(loss="binary_crossentropy", optimizer=opt, metrics=["accuracy"])
 
-# Train model
-print("[INFO] Training model...")
-H = model.fit(aug.flow(trainX, trainY, batch_size=BATCH_SIZE),
-              validation_data=(testX, testY), epochs=EPOCHS, verbose=1)
+# Callbacks
+callbacks = [
+    EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True),
+    ModelCheckpoint(MODEL_PATH, monitor='val_loss', save_best_only=True),  # Removed save_format
+    ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=3, min_lr=1e-6)
+]
 
-# Evaluate model
+# Adjust class weights
+class_weights = {0: 1.0, 1: 2.0}  # Adjust weights based on class distribution
+
+# Fine-tune the model
+for layer in baseModel.layers[-20:]:  # Unfreeze the last 20 layers
+    layer.trainable = True
+opt = Adam(learning_rate=INIT_LR / 10)  # Lower learning rate
+model.compile(loss="binary_crossentropy", optimizer=opt, metrics=["accuracy"])
+
+# --- Train ---
+H = model.fit(
+    train_gen,
+    steps_per_epoch=train_gen.samples // BATCH_SIZE,
+    validation_data=val_gen,
+    validation_steps=(val_gen.samples + BATCH_SIZE - 1) // BATCH_SIZE,
+    epochs=EPOCHS,
+    callbacks=callbacks,
+    class_weight=class_weights,  # Add class weights
+    verbose=1
+)
+
+# Save the final model explicitly in .keras format
+model.save(MODEL_PATH)
+
+# --- Evaluate ---
 print("[INFO] Evaluating model...")
-predIdxs = model.predict(testX, batch_size=BATCH_SIZE)
-predIdxs = np.argmax(predIdxs, axis=1)
-print(classification_report(testY.argmax(axis=1), predIdxs, target_names=lb.classes_))
+# Predict on validation set
+val_gen.reset()
+predIdx = (model.predict(val_gen, steps=(val_gen.samples + BATCH_SIZE - 1) // BATCH_SIZE) > 0.5).astype("int32").ravel()
+trueIdx = val_gen.classes[:len(predIdx)]
 
-# Save model
-print("[INFO] Saving model...")
-model.save("mask_detector.h5") 
+print(classification_report(trueIdx, predIdx,
+      target_names=list(val_gen.class_indices.keys())))
+print("Confusion Matrix:\n", confusion_matrix(trueIdx, predIdx))
 
-# Save Label Binarizer
-print("[INFO] Saving label binarizer...")
-with open("label_binarizer.pickle", "wb") as f:
-    pickle.dump(lb, f)
+# --- Plot Training Curves ---
+plt.style.use("ggplot")
+plt.figure()
+plt.plot(H.history['loss'], label='train_loss')
+plt.plot(H.history['val_loss'], label='val_loss')
+plt.plot(H.history['accuracy'], label='train_acc')
+plt.plot(H.history['val_accuracy'], label='val_acc')
+plt.title('Training Loss and Accuracy')
+plt.xlabel('Epoch')
+plt.ylabel('Loss/Accuracy')
+plt.legend(loc='lower left')
+plt.savefig(PLOT_PATH)
+plt.close()
+
+print(f"[INFO] Model saved to {MODEL_PATH}")
+print(f"[INFO] Training plot saved to {PLOT_PATH}")
