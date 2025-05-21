@@ -6,7 +6,9 @@ import os
 # โหลดโมเดล
 model_path = r"D:\Code\AI\งานปิดเทอม\FACEMask-Detection\backend\models\Face_mask_detection.hdf5"
 img_folder = r"D:\Code\AI\งานปิดเทอม\FACEMask-Detection\Ai_test\Check the masked person\test"
-model = tf.keras.models.load_model(model_path)
+
+# โหลดโมเดลโดยไม่ compile (ไม่โหลด optimizer)
+model = tf.keras.models.load_model(model_path, compile=False)
 
 # ตรวจสอบจำนวน output class ของโมเดล
 print("Model output shape:", model.output_shape)
