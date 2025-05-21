@@ -54,7 +54,7 @@ class ModelLoader:
         print(f"{self.selected} training")
         if self.selected == "DeepLearning":
             self.initilize_class.callback = WandbMetricsLogger(log_freq="epoch")
-        self.initilize_class.train(model=model)
+        return self.initilize_class.train(model=model)
     
     def save_model(self,model,file_name):
         joblib.dump(model,f"{self.save_folder}/{file_name}.h5")

@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 from utils.detect_mask import detect_mask_multi
 # from tensorflow.keras.models import load_model  # type: ignore
+
 import pathlib
 
 backend_path = pathlib.Path(__file__).parent.absolute()
@@ -13,6 +14,7 @@ path = f"{backend_path}/models/DeepLearning.h5"
 # model = load_model(path)
 
 app = Flask(__name__)
+
 
 
 @app.get("/")

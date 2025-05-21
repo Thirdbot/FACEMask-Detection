@@ -6,6 +6,9 @@ import joblib
 # Disable joblib warning about CPU cores
 os.environ['LOKY_MAX_CPU_COUNT'] = '4'  # Set to number of cores you want to use
 
+import tensorflow as tf
+sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(log_device_placement=True))
+
 class KNNClass:
     def __init__(self,config=None):
         self.train_data = None

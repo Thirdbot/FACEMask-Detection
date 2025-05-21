@@ -39,26 +39,26 @@ class LogModel:
                 "DeepLearning": {
                     "parameters": {
                         "batch_size": {"values": [16,32,64]},
-                        "epochs": {"values": [1,2,3]},
+                        "epochs": {"values": [5,10]},
                         "optimizer": {"values": ["adam","sgd"]},
-                        "lr": {"values": [0.001,0.01,0.1]}
+                        "lr": {"values": [0.001,0.01,0.1,0.0001,0.00000001]}
                     }
                 },
                 "RFC": {
                     "parameters": {
-                        "n_estimators": {"values": [10,20,30]},
-                        "max_depth": {"values": [3,5,7]},
-                        "min_samples_split": {"values": [2,4,6]},
-                        "min_samples_leaf": {"values": [1,2,3]},
+                        "n_estimators": {"values": [10,20,30,50,100]},
+                        "max_depth": {"values": [3,5,7,10,20]},
+                        "min_samples_split": {"values": [2,4,6,10,20]},
+                        "min_samples_leaf": {"values": [1,2,3,5,10]},
                         "max_features": {"values": ["sqrt","log2"]},
                         "criterion": {"values": ["gini","entropy"]}
                     }
                 },
                 "DecisionClass": {
                     "parameters": {
-                        "max_depth": {"values": [3,5,7]},
-                        "min_samples_split": {"values": [2,4,6]},
-                        "min_samples_leaf": {"values": [1,2,3]},
+                        "max_depth": {"values": [3,5,7,10,20]},
+                        "min_samples_split": {"values": [2,4,6,10,20]},
+                        "min_samples_leaf": {"values": [1,2,3,5,10]},
                         "max_features": {"values": ["sqrt","log2"]},
                         "criterion": {"values": ["gini","entropy"]},
                         "splitter": {"values": ["best","random"]}
@@ -66,9 +66,9 @@ class LogModel:
                 },
                 "KNNClass": {
                     "parameters": {
-                        "n_neighbors": {"values": [3,5,7]},
-                        "leaf_size": {"values": [30,40,50]},
-                        "p": {"values": [1,2,3]},
+                        "n_neighbors": {"values": [3,5,7,10,20]},
+                        "leaf_size": {"values": [30,40,50,100]},
+                        "p": {"values": [1,2,3,5]},
                         "metric": {"values": ["minkowski","euclidean"]},
                         "weights": {"values": ["uniform","distance"]}
                     }

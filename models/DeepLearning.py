@@ -6,6 +6,9 @@ from tensorflow.keras.layers import Flatten, Dense, Dropout, Conv2D, MaxPooling2
 from sklearn.metrics import precision_score, recall_score, log_loss, accuracy_score
 from wandb.integration.keras import WandbMetricsLogger
 import tensorflow as tf
+import keras
+
+sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(log_device_placement=True))
 
 class DeepLearning:
     def __init__(self, config=None):
