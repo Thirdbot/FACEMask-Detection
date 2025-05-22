@@ -15,7 +15,6 @@ import random
 
 #image mismatch handler
 import shutil
-import torch
 from modelLoader import ModelLoader
 from log_model.startlog import LogModel
 import wandb
