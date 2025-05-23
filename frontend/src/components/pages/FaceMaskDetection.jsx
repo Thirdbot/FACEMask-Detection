@@ -93,7 +93,7 @@ const FaceMaskDetection = () => {
           ctx.strokeRect(x, y, w, h);
           ctx.font = "20px IBM Plex Sans Thai";
           ctx.fillStyle = face.label === "ใส่แมส" ? "#22c55e" : "#ef4444";
-          
+
           const conf =
             face.confidence !== undefined
               ? ` (${(face.confidence * 100).toFixed(1)}%)`
@@ -102,7 +102,6 @@ const FaceMaskDetection = () => {
         }
       });
 
-    
       prevBoxesRef.current = faces.map((f) => f.box);
 
       animFrame = requestAnimationFrame(animateBoxes);
@@ -158,7 +157,7 @@ const FaceMaskDetection = () => {
               },
             }
           );
-          
+
           if (data.results && data.results.length > 0) {
             data.results.forEach((face, idx) => {
               console.log(
@@ -281,9 +280,7 @@ const FaceMaskDetection = () => {
             ref={videoRef}
             className="bg-gradient-to-b from-neutral-950 via-neutral-900 bg-neutral-800 rounded-3xl w-full h-[450px] object-cover shadow-3xl border-8 border-black/80 box-border"
           />
-          {/* Hidden canvas for capturing frame */}
           <canvas ref={canvasRef} style={{ display: "none" }} />
-          {/* Overlay canvas for drawing rectangles */}
           <canvas
             ref={overlayRef}
             className="absolute top-0 left-0 w-full h-full pointer-events-none"
