@@ -88,8 +88,12 @@ const FaceMaskDetection = () => {
         if (face.box && smoothBoxes[i]) {
           const [x, y, w, h] = smoothBoxes[i];
           ctx.lineWidth = 4;
-          ctx.strokeStyle =
-            face.label === "ใส่แมส" ? "#22c55e" : "#ef4444";
+          const colorMap = {
+            green: "#22c55e",
+            red: "#ef4444"
+          };
+          ctx.strokeStyle = colorMap[face.color] || "#ef4444";
+          ctx.fillStyle = colorMap[face.color] || "#ef4444";
           ctx.strokeRect(x, y, w, h);
           ctx.font = "20px IBM Plex Sans Thai";
           ctx.fillStyle = face.label === "ใส่แมส" ? "#22c55e" : "#ef4444";
@@ -170,7 +174,11 @@ const FaceMaskDetection = () => {
           }
           setFaces(data.results || []);
         } catch (err) {
-          if (err instanceof Error) {
+          if (err.response && err.response.data && err.response.data.error === "No face detected") {
+            // ไม่ต้องปิดกล้อง แค่ล้างกรอบหรือแสดงข้อความเตือน
+            setFaces([]);
+          } else {
+            // error อื่นๆ ค่อยปิดกล้อง
             setFaces([{ box: null, label: "Error", confidence: 0 }]);
             handleCloseCamera();
             handleShowErrorAlert(err.message);
