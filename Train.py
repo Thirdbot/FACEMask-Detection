@@ -41,7 +41,7 @@ class Trainer:
         
         self.dataset_name = "cleaned_dataset"   
         
-        self.version = "latest"
+        # self.version = "latest"
         
         self.model_config = None
         
@@ -174,25 +174,89 @@ class Trainer:
         
         return best_models
     
-    def train(self,model_name):
-        self.model = self.model_loader.train(self.model)
-        path = self.model_loader.save_model(self.model,model_name)
-                    
-        self.log_model.create_project_model(project_name=self.model_project_name,model_name=model_name,model_path=path,resume=True)
-        # self.log_model.run.log_artifact(artifact)
-        eval_metrics = self.evaluate_model(model_name)
-        score_metrics = self.score_model(model_name)
+    def train(self, model_name):
+        best_model,best_scores = {},{}
+        print(f"Training {model_name}...")
+
+        self.log_model.sweep_configuration.update({'name':model_name})
+        sweep_config = self.log_model.sweep_configuration
         
-        # Log all metrics
+        new_sweep_config = {}
+        if sweep_config['parameters'][model_name]:
+            new_sweep_config['method'] = sweep_config['method']
+            new_sweep_config['name'] = sweep_config['name']
+            new_sweep_config['metric'] = sweep_config['metric']
+            new_sweep_config['parameters'] = sweep_config['parameters'][model_name]['parameters']
+        else:
+            raise ValueError(f"Model {model_name} not found in sweep configuration")
         
-        self.log_model.project.log({
-            "model": model_name,
-            "val_accuracy": eval_metrics[0],
-            "val_loss": eval_metrics[1],
-            "val_precision": score_metrics[0],
-            "val_recall": score_metrics[1]
-        })
+        self.sweep_id = wandb.sweep(new_sweep_config,project=self.model_project_name)
+        
+        # Define the training function that will be used by the agent
+        def train_func():
+            nonlocal best_model,best_scores  # Allow access to outer scope variables
+            random_time = time.strftime("%Y%m%d_%H%M%S", time.localtime())
+            # Create a new run for each model
+            self.log_model.create_project_model(
+                project_name=self.model_project_name,
+                model_name=f"{model_name}_sweep_{random_time}",
+                model_path=None
+            )
+            self.create_model(model_name, self.log_model.model_config)
+            # Train the model
+            self.model = self.model_loader.train(self.model)
+            
+            # Save model and get metrics
+            model_path = self.model_loader.save_model(self.model, model_name)
+            eval_metrics = self.evaluate_model(model_name)
+            score_metrics = self.score_model(model_name)
+            
+            # Track best model for this model type
+            if model_name not in best_scores or eval_metrics[0] > best_scores[model_name]:
+                best_scores[model_name] = eval_metrics[0]
+                best_model[model_name] = {
+                    'model_path': model_path,
+                    'metrics': {
+                        'accuracy': eval_metrics[0],
+                        'loss': eval_metrics[1],
+                        'precision': score_metrics[0],
+                        'recall': score_metrics[1]
+                    },
+                    'config': self.log_model.model_config
+                }
+                print(f"New best model saved for {model_name} with accuracy: {eval_metrics[0]:.4f}")
+            
+            # Log metrics with consistent naming
+            metrics = {
+                "val_accuracy": float(eval_metrics[0]),
+                "val_loss": float(eval_metrics[1]),
+                "val_precision": float(score_metrics[0]),
+                "val_recall": float(score_metrics[1])
+            }
+            self.log_model.model_proj.log(metrics)
+        
+        # Run the agent with the training function
+        wandb.agent(self.sweep_id, function=train_func, count=self.runtime)
+        
+        # Update table of val data
+        self.eval_dataset(model_name, self.valid_data[0], self.valid_data[1])
+        
+        wandb.finish()
     
+        # Print best models summary
+        print("\nBest Models Summary:")
+        for model_name, model_info in best_model.items():
+            print(f"\n{model_name}:")
+            print(f"Best Accuracy: {model_info['metrics']['accuracy']:.4f}")
+            print(f"Loss: {model_info['metrics']['loss']:.4f}")
+            print(f"Precision: {model_info['metrics']['precision']:.4f}")
+        print(f"Recall: {model_info['metrics']['recall']:.4f}")
+        print(f"Model saved at: {model_info['model_path']}")
+        print("Best Configuration:")
+        for param, value in model_info['config'].items():
+            print(f"  {param}: {value}")
+    
+        return best_model
     
     def load_model(self,model_name):
         print(f"Loading {model_name} model")
@@ -238,31 +302,82 @@ class Trainer:
         return self.model_loader.score(model)
     
     def evaluate_all(self):
+        print("\nEvaluating all models...")
         eval_dict = {}
+        
         for model_name in self.model_list:
+            print(f"\nEvaluating {model_name}...")
             self.create_model(model_name)
-            self.log_model.create_project_model(project_name=self.model_project_name,model_name=model_name,model_path=None,resume=True)
-            eval_dict[model_name] = self.evaluate_model(model_name)
+            self.log_model.create_project_model(
+                project_name=self.model_project_name,
+                model_name=model_name,
+                model_path=None,
+                resume=True
+            )
+            
+            eval_metrics = self.evaluate_model(model_name)
+            eval_dict[model_name] = eval_metrics
+            
+            # Log metrics
             self.log_model.project.log({
                 "model": model_name,
-                "val_accuracy": eval_dict[model_name][0],
-                "val_loss": eval_dict[model_name][1],
-               
+                "val_accuracy": float(eval_metrics[0]),
+                "val_loss": float(eval_metrics[1])
             })
+            
+            # Print evaluation results
+            print(f"Accuracy: {eval_metrics[0]:.4f}")
+            print(f"Loss: {eval_metrics[1]:.4f}")
+            
+            # Evaluate on validation dataset
+            self.eval_dataset(model_name, self.valid_data[0], self.valid_data[1])
+        
+        # Print summary of all models
+        print("\nEvaluation Summary for All Models:")
+        print("-" * 50)
+        for model_name, metrics in eval_dict.items():
+            print(f"\n{model_name}:")
+            print(f"Accuracy: {metrics[0]:.4f}")
+            print(f"Loss: {metrics[1]:.4f}")
         
         return eval_dict
+    
     def score_all(self):
+        print("\nScoring all models...")
         score_dict = {}
+        
         for model_name in self.model_list:
+            print(f"\nScoring {model_name}...")
             self.create_model(model_name)
-            self.log_model.create_project_model(project_name=self.model_project_name,model_name=model_name,model_path=None,resume=True)
-
-            score_dict[model_name] = self.score_model(model_name)
+            self.log_model.create_project_model(
+                project_name=self.model_project_name,
+                model_name=model_name,
+                model_path=None,
+                resume=True
+            )
+            
+            score_metrics = self.score_model(model_name)
+            score_dict[model_name] = score_metrics
+            
+            # Log metrics
             self.log_model.project.log({
                 "model": model_name,
-                "val_precision": score_dict[model_name][0],
-                "val_recall": score_dict[model_name][1]
+                "val_precision": float(score_metrics[0]),
+                "val_recall": float(score_metrics[1])
             })
+            
+            # Print scoring results
+            print(f"Precision: {score_metrics[0]:.4f}")
+            print(f"Recall: {score_metrics[1]:.4f}")
+        
+        # Print summary of all models
+        print("\nScoring Summary for All Models:")
+        print("-" * 50)
+        for model_name, metrics in score_dict.items():
+            print(f"\n{model_name}:")
+            print(f"Precision: {metrics[0]:.4f}")
+            print(f"Recall: {metrics[1]:.4f}")
+        
         return score_dict
 
 
@@ -277,7 +392,7 @@ class Trainer:
 if __name__ == "__main__":
     main = Trainer()
     # main.create_model("DecisionClass")
-    main.train_all()
+    main.train("DeepLearning")
     # main.train("DecisionClass")
     
 

@@ -25,7 +25,7 @@ class DatasetLoader:
         
         self.sub_name = ['training','validation']
         
-        self.class_label = {0:"with_mask",1:"without_mask"}
+        self.class_label = {0:"without_mask",1:"with_mask"}
         # Define transformations
         self.transform = transforms.Compose([
             transforms.Resize((self.size, self.size)),

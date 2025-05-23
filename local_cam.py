@@ -5,7 +5,7 @@ import numpy as np
 
 Home_dir = Path(__file__).parent.absolute()
 
-model_path = Home_dir / "save" / "RFC.h5"
+model_path = Home_dir / "save" / "DeepLearning.h5"
 
 model = joblib.load(model_path)
 
@@ -13,7 +13,7 @@ video_capture = cv2.VideoCapture(0)
 
 face_cascade = cv2.CascadeClassifier(Home_dir / "backend" / "haarcascade_frontalface_default.xml")
 
-label = {1:"Mask",0:"No Mask"}
+label = {0:"with_mask",1:"without_mask"}
 
 while True:
     ret,frame = video_capture.read()
@@ -30,7 +30,7 @@ while True:
         face_image = cv2.resize(face_image,(128,128))
         face_image = np.expand_dims(face_image,axis=0)
         face_image = face_image.astype(np.float32) / 255.0
-        face_image = np.reshape(face_image,(face_image.shape[0],-1))
+        # face_image = np.reshape(face_image,(face_image.shape[0],-1))
         
         prediction = model.predict(face_image)
         class_idx = int(np.argmax(prediction))
