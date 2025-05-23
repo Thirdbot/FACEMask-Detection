@@ -1,23 +1,30 @@
 from flask import Flask, request, jsonify
 from flask_cors import cross_origin
-from tensorflow.keras.models import load_model  # type: ignore
-from utils.detect_mask import preprocess_image
 import numpy as np
 import cv2
-
+import tensorflow as tf
+from utils.detect_mask import preprocess_image, detect_and_crop_face
 
 app = Flask(__name__)
-model = load_model("models/Face_mask_detection.hdf5", compile=False)
 
-origins = ["http://localhost:5173"]
+interpreter = tf.lite.Interpreter(model_path='./models/model_quant.tflite')
+interpreter.allocate_tensors()
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
 
+def tflite_predict(input_img):
+    interpreter.set_tensor(input_details[0]['index'], input_img.astype(np.float32))
+    interpreter.invoke()
+    output = interpreter.get_tensor(output_details[0]['index'])
+    return output
+
+origins = ["http://localhost:5173", "http://localhost:5174"]
 
 @app.get("/")
 def index():
     return "Hello World!", 200
 
-
-@app.post("/api/mask-detection")
+@app.post('/api/mask-detection')
 @cross_origin(origins=origins, methods=["POST"], allow_headers=["Content-Type"])
 def detect_mask():
     if "file" not in request.files:
@@ -31,39 +38,35 @@ def detect_mask():
         file_bytes = np.frombuffer(file.read(), np.uint8)
         img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
         if img is None:
-            return jsonify({"error": "Cannot decode image"}), 400
+            return jsonify({'error': 'Cannot decode image'}), 400
 
-        input_img = preprocess_image(img)
-        prediction = model.predict(input_img)
-        print("prediction:", prediction)
+        # ตรวจจับใบหน้าและเก็บตำแหน่งกรอบ
+        face_img, box = detect_and_crop_face(img)
+        if face_img is None:
+            return jsonify({'error': 'No face detected'}), 400
 
-        boxes = prediction[0][0]
-        class_probs = prediction[1][0]
+        input_img = preprocess_image(face_img)
+        prediction = tflite_predict(input_img)
 
-        height, width = img.shape[:2]
-        results = []
-        for i in range(boxes.shape[0]):
-            box = boxes[i]
-            cx, cy, w, h = box
-            w = abs(w)
-            h = abs(h)
+        class_labels = ["No Mask", "Mask", "No_Mask."]  # ปรับชื่อ class ให้ตรงกับที่เทรน
 
-            x1 = int((cx - w / 2) * width / 2 + width / 2)
-            y1 = int((cy - h / 2) * height / 2 + height / 2)
-            x2 = int((cx + w / 2) * width / 2 + width / 2)
-            y2 = int((cy + h / 2) * height / 2 + height / 2)
-            box_int = [x1, y1, x2 - x1, y2 - y1]
+        pred_idx = int(np.argmax(prediction[0]))
+        confidence = float(np.max(prediction[0]))
+        label = class_labels[pred_idx]
 
-            prob_mask = class_probs[i][0]
-            prob_no_mask = class_probs[i][1]
-            label = "ใส่แมส" if prob_mask > prob_no_mask else "ไม่ใส่แมส"
-            confidence = float(max(prob_mask, prob_no_mask))
-            if confidence > 0.5:
-                results.append(
-                    {"box": box_int, "label": label, "confidence": confidence}
-                )
+        # กำหนดสีตาม label
+        if label == "Mask":
+            color = "green"
+        else:
+            color = "red"
 
-        return jsonify({"results": results})
+        result = {
+            "label": label,
+            "confidence": confidence,
+            "box": [int(box[0]), int(box[1]), int(box[2]), int(box[3])],
+            "color": color
+        }
+        return jsonify({"results": [result]})
     except Exception as e:
         print("Error:", e)
         return jsonify({"error": str(e)}), 500
