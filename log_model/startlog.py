@@ -1,9 +1,7 @@
 import wandb
 from wandb.integration.keras import WandbCallback
 import numpy as np
-from PIL import Image
 from pathlib import Path
-import cv2
 # wandb.init(config=config)
 
 
@@ -112,7 +110,7 @@ class LogModel:
         
         
     def create_table(self,model_name,project_name,columns):
-        self.new_table = wandb.init(project=project_name,name=f"{model_name}_validation", job_type='dataset')
+        self.new_table = wandb.init(project=project_name,name=f"{model_name}", job_type='dataset')
         self.eval_table = wandb.Table(columns=columns)
                 
     def create_project_model(self,project_name,model_name,model_path=None,resume=False):

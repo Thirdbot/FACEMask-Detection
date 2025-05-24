@@ -10,7 +10,7 @@ import pathlib
 
 backend_path = pathlib.Path(__file__).parent.absolute()
 origins = ["http://localhost:5173"]
-path = f"{backend_path}/models/DeepLearning.h5"
+path = f"{backend_path}/models/RFC.h5"
 # model = load_model(path)
 
 app = Flask(__name__)

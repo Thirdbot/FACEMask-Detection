@@ -1,8 +1,7 @@
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import precision_score, recall_score, log_loss, accuracy_score
+from sklearn.metrics import precision_score, recall_score, accuracy_score
 from pathlib import Path
 import os
-import joblib
 # Disable joblib warning about CPU cores
 os.environ['LOKY_MAX_CPU_COUNT'] = '4'  # Set to number of cores you want to use
 class KNNClass:

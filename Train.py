@@ -23,39 +23,30 @@ from modelLoader import ModelLoader
 from log_model.startlog import LogModel
 import wandb
 import numpy as np
-
+from FeatureExtraction import FeatureExtractor
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
-
-
-
-from pathlib import Path
-from xlm_dataloader import create_dataloaders
-
-Home_dir = Path(__file__).parent.absolute()
-
-dataset_path = Home_dir / "cleaned_dataset" / "data"
 # dataset_path = Home_dir / "dataset"
 
 class Trainer:
-    def __init__(self):
+    def __init__(self,path):
         self.size = 128
-        self.runtime = 1
+        self.runtime = 2
         self.model_project_name = "my_model"
         self.data_project_name = "my_dataset"
-        
+        self.dataset_path = path
         self.dataset_name = "cleaned_dataset"
-        self.feature_dataset_name = "feature_dataset"
         
         self.train_data = None
         self.test_data = None
         self.valid_data = None
+        self.whole_data = None
         
         # self.version = "latest"
         
         self.model_config = None
         
         # Move data to GPU if available
-        self.dataset_loader = DatasetLoader(dataset_path=dataset_path,
+        self.dataset_loader = DatasetLoader(dataset_path=self.dataset_path,
                                           size=self.size,
                                           batch_size=32)
         
@@ -63,9 +54,8 @@ class Trainer:
         
         self.entity = self.log_model.user
         
-        self.create_raw_dataset()
-        self.create_feature_dataset()
         
+        self.whole_dataset_label = self.create_raw_dataset()
        
         
         self.model_loader = ModelLoader(self.train_data,
@@ -73,36 +63,29 @@ class Trainer:
                                       self.test_data,
                                       self.size)
         
-        self.model_list = ["DeepLearning", "RFC", "KNNClass", "DecisionClass"]
-    
-    def create_feature_dataset(self):
-        with wandb.init(project=self.data_project_name, name=self.feature_dataset_name) as run:
-            # Now create and log the processed dataset
-            processed_artifact = wandb.Artifact(
-                name=f"{self.feature_dataset_name}-v1",
-                type="processed_dataset",
-                description="Processed feature dataset"
-            )
-            run.log_artifact(processed_artifact)
-            
-            dataset_project = run.use_artifact(f"{self.data_project_name}/{self.dataset_name}-v1:latest")
-            dataset_dir = dataset_project.download()
-            print(f"Downloaded artifact to {dataset_dir}")
-            
-          
-    
-    def read_download(self,raw_dataset):
-        print(raw_dataset)
+        self.model_list = ["DeepLearning","RFC", "KNNClass", "DecisionClass"]
+                 
         
     def create_raw_dataset(self):
-        whole_data = self.dataset_loader.whole_data
+        whole_dataset = self.dataset_loader.make_dataset_raw(self.dataset_path,color_mode='grayscale')
+        train_generator = self.dataset_loader.make_dataset_split(self.dataset_path,subset=self.dataset_loader.sub_name[0],color_mode='grayscale')
+        test_generator = self.dataset_loader.make_dataset_split(self.dataset_path,subset=self.dataset_loader.sub_name[1],color_mode='grayscale')
+        valid_generator = self.dataset_loader.make_dataset_split(self.dataset_path,subset=self.dataset_loader.sub_name[1],color_mode='grayscale')
+        
+        self.whole_data = self.dataset_loader.get_xy_data(whole_dataset)
+        self.train_data = self.dataset_loader.get_xy_data(train_generator)
+        self.test_data = self.dataset_loader.get_xy_data(test_generator)
+        self.valid_data = self.dataset_loader.get_xy_data(valid_generator)
+        
         self.log_model.create_project_dataset(
             project_name=self.data_project_name,
             dataset_name=f"{self.dataset_name}-v1",
-            dataset_path=dataset_path,
+            dataset_path=self.dataset_path,
             job="dataset"
         )
-        self.log_model.loop_table(*whole_data)
+        self.log_model.loop_table(*self.whole_data)
+        
+        return list(valid_generator.class_indices.keys())
         
     def create_model(self, model_name, config=None):
         #select model from lib and model_name
@@ -297,7 +280,8 @@ class Trainer:
         return self.model_loader.evaluate(model)
     
     def eval_dataset(self,model_name,test_data,test_label):
-        self.log_model.create_table(model_name,self.data_project_name,["image","true_label","pred_label","RESULT"])
+        table_name = f"{model_name}_validation"
+        self.log_model.create_table(table_name,self.data_project_name,["image","true_label","pred_label","RESULT"])
         
         data = test_data
         if model_name != "DeepLearning":
@@ -313,14 +297,14 @@ class Trainer:
             # Create wandb image
             wandb_image = wandb.Image(
                 x,
-                caption=f"True: {self.dataset_loader.class_label[y_true_idx]}, Pred: {self.dataset_loader.class_label[y_pred_idx]}"
+                caption=f"True: {self.whole_dataset_label[y_true_idx]}, Pred: {self.whole_dataset_label[y_pred_idx]}"
             )
             result = "Correct" if y_true_idx == y_pred_idx else "Incorrect"
             # Add to table
             self.log_model.eval_table.add_data(
                 wandb_image,
-                self.dataset_loader.class_label[y_true_idx],
-                self.dataset_loader.class_label[y_pred_idx],
+                self.whole_dataset_label[y_true_idx],
+                self.whole_dataset_label[y_pred_idx],
                 result
             )
             
@@ -409,26 +393,6 @@ class Trainer:
             print(f"Recall: {metrics[1]:.4f}")
         
         return score_dict
-
-
-## TODO
-
-# create a sweeping for optimization
-#image dataset flood 
-#returning list and best model
-
-
-
-if __name__ == "__main__":
-    main = Trainer()
-    # main.create_model("DecisionClass")
-    main.train("DeepLearning")
-    # main.train("DecisionClass")
-    
-
-
-
-
 
 
 

@@ -22,6 +22,7 @@ def preprocess_image(frame):
 def detect_mask_multi(frame, model):
     results = []
     try:
+        name = model.split("/")[-1]
         # Preprocess image
         gray = preprocess_image(frame)
         
@@ -55,21 +56,21 @@ def detect_mask_multi(frame, model):
             resized_face = cv2.resize(face_img, (128, 128))
             normalized_face = resized_face / 255.0
             input_face = np.expand_dims(normalized_face, axis=0)
-            
-            # Get prediction
-            prediction = model_loaded.predict(input_face, verbose=0)
+            if name != "DeepLearning":
+                input_face = np.reshape(input_face, (1, -1))
+                prediction = model_loaded.predict(input_face)
+            else:
+                prediction = model_loaded.predict(input_face, verbose=0)
             class_idx = int(np.argmax(prediction))
             class_label = categories[class_idx]
             confidence = float(prediction[0][class_idx])
             
-            # Only include high confidence predictions
-            if confidence > 0.6:  # Confidence threshold
-                friendly = "Wearing Mask" if class_label == "with_mask" else "No Mask"
-                results.append({
-                    "box": [int(x1), int(y1), int(x2-x1), int(y2-y1)],
-                    "label": friendly,
-                    "confidence": confidence
-                })
+            friendly = "Wearing Mask" if class_label == "with_mask" else "No Mask"
+            results.append({
+                "box": [int(x1), int(y1), int(x2-x1), int(y2-y1)],
+                "label": friendly,
+                "confidence": confidence
+            })
         
         if not results:
             results.append({"box": None, "label": "No Face", "confidence": 0.0})

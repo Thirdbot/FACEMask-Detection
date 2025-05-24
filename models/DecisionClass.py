@@ -1,10 +1,7 @@
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.metrics import precision_score, recall_score, log_loss, accuracy_score
+from sklearn.metrics import precision_score, recall_score, accuracy_score
 from pathlib import Path
 import os
-import joblib  # Add this import for model saving
-# Disable joblib warning about CPU cores
-import torch
 os.environ['LOKY_MAX_CPU_COUNT'] = '4'  # Set to number of cores you want to use
 
 
