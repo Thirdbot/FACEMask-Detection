@@ -95,9 +95,9 @@ class LogModel:
             print(f"Warning: Failed to login to wandb: {e}")
             print("Please make sure you have run 'wandb login' in your terminal")
        
-    def create_project_dataset(self,project_name,dataset_name,dataset_path):
+    def create_project_dataset(self,project_name,dataset_name,dataset_path,job):
         self.data_project_name = project_name
-        self.data_proj = wandb.init(project=project_name,name=dataset_name,job_type='dataset')
+        self.data_proj = wandb.init(project=project_name,name=dataset_name,job_type=job)
          # Create and log the artifact
         artifact = wandb.Artifact(
             name=dataset_name,
@@ -105,7 +105,7 @@ class LogModel:
             description="Face mask detection dataset"
         )
         artifact.add_dir(str(dataset_path))
-        # self.project.log_artifact(artifact)
+        self.data_proj.log_artifact(artifact)
         
         # Create a static table
         self.standard_table = wandb.Table(columns=["image", "label"])

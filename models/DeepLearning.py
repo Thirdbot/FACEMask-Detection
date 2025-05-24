@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 import numpy as np
+import tensorflow as tf
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import Flatten, Dense, Dropout, Conv2D, MaxPooling2D, BatchNormalization, GlobalAveragePooling2D
 from sklearn.metrics import precision_score, recall_score, log_loss, accuracy_score
@@ -15,9 +16,9 @@ class DeepLearning:
         self.validate_data = None
         self.test_data = None
         self.num_classes = 2
-        self.class_label = {0:"with_mask",1:"without_mask"}
+        self.class_label = {0:"without_mask", 1:"with_mask"}
         self.callback = None
-        self.color_channel = 3
+        self.color_channel = 1
 
     def __get_attribute__(self, item):
         return super(DeepLearning, self).__getattribute__(item)
@@ -30,7 +31,7 @@ class DeepLearning:
         model = Sequential()
 
         # เพิ่มแต่ล่ะ convolution layers ให้ model
-        model.add(Conv2D(32, (3, 3), activation='relu', input_shape=(self.size,self.size,self.color_channel), data_format='channels_last'))
+        model.add(Conv2D(32, (3, 3), activation='relu'))
         model.add(BatchNormalization())
         model.add(MaxPooling2D(pool_size=(2, 2)))
 

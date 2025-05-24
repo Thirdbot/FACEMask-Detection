@@ -1,5 +1,9 @@
 # นำเข้า modules ของ libraries
 import os
+# Set environment variables before importing TensorFlow
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'  # Disable oneDNN custom operations
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'   # Reduce TensorFlow logging
+
 import re
 import time
 from datasetLoader import DatasetLoader
@@ -35,11 +39,16 @@ dataset_path = Home_dir / "cleaned_dataset" / "data"
 class Trainer:
     def __init__(self):
         self.size = 128
-        self.runtime = 5
+        self.runtime = 1
         self.model_project_name = "my_model"
         self.data_project_name = "my_dataset"
         
-        self.dataset_name = "cleaned_dataset"   
+        self.dataset_name = "cleaned_dataset"
+        self.feature_dataset_name = "feature_dataset"
+        
+        self.train_data = None
+        self.test_data = None
+        self.valid_data = None
         
         # self.version = "latest"
         
@@ -54,18 +63,10 @@ class Trainer:
         
         self.entity = self.log_model.user
         
-        self.log_model.create_project_dataset(project_name=self.data_project_name,
-                                            dataset_name=self.dataset_name,
-                                            dataset_path=dataset_path)
+        self.create_raw_dataset()
+        self.create_feature_dataset()
         
-        self.train_data = self.dataset_loader.train_data
-        self.test_data = self.dataset_loader.test_data
-        self.valid_data = self.dataset_loader.valid_data
-        self.whole_data = self.dataset_loader.whole_dataset
-        
-        # ###visualization
-        self.whole_x, self.whole_y = self.dataset_loader.get_xy_data(self.whole_data)
-        self.log_model.loop_table(self.whole_x, self.whole_y)
+       
         
         self.model_loader = ModelLoader(self.train_data,
                                       self.valid_data,
@@ -74,6 +75,35 @@ class Trainer:
         
         self.model_list = ["DeepLearning", "RFC", "KNNClass", "DecisionClass"]
     
+    def create_feature_dataset(self):
+        with wandb.init(project=self.data_project_name, name=self.feature_dataset_name) as run:
+            # Now create and log the processed dataset
+            processed_artifact = wandb.Artifact(
+                name=f"{self.feature_dataset_name}-v1",
+                type="processed_dataset",
+                description="Processed feature dataset"
+            )
+            run.log_artifact(processed_artifact)
+            
+            dataset_project = run.use_artifact(f"{self.data_project_name}/{self.dataset_name}-v1:latest")
+            dataset_dir = dataset_project.download()
+            print(f"Downloaded artifact to {dataset_dir}")
+            
+          
+    
+    def read_download(self,raw_dataset):
+        print(raw_dataset)
+        
+    def create_raw_dataset(self):
+        whole_data = self.dataset_loader.whole_data
+        self.log_model.create_project_dataset(
+            project_name=self.data_project_name,
+            dataset_name=f"{self.dataset_name}-v1",
+            dataset_path=dataset_path,
+            job="dataset"
+        )
+        self.log_model.loop_table(*whole_data)
+        
     def create_model(self, model_name, config=None):
         #select model from lib and model_name
         model_func = self.model_loader.select(model_name)
