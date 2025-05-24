@@ -48,9 +48,9 @@ export const getMediaStreamConstraints = () => {
 
   return {
     video: {
-      width: { min: 854, exact: resolution.width, max: 1920 },
-      height: { min: 480, exact: resolution.height, max: 1080 },
-      frameRate: { min: 30, exact: settings.framerate, max: 90 },
+      width: { min: 854, ideal: resolution.width, max: 1920 },
+      height: { min: 480, ideal: resolution.height, max: 1080 },
+      frameRate: { min: 30, ideal: settings.framerate, max: 90 },
     },
     audio: false,
   };

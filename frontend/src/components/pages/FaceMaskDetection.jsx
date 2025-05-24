@@ -53,7 +53,6 @@ const FaceMaskDetection = () => {
     };
   }, [isCameraOpen]);
 
-  // Smooth box animation using requestAnimationFrame
   useEffect(() => {
     let animFrame = null;
     const overlay = overlayRef.current;
@@ -67,41 +66,39 @@ const FaceMaskDetection = () => {
     overlay.width = video.videoWidth;
     overlay.height = video.videoHeight;
 
-    // Helper: linear interpolation
     const lerp = (a, b, t) => {
       return a + (b - a) * t;
     };
 
-    // Animate boxes
     const animateBoxes = () => {
       ctx.clearRect(0, 0, overlay.width, overlay.height);
       if (!faces || !video.videoWidth || !video.videoHeight) {
         return;
       }
 
-      // Prepare previous and current boxes
       let prevBoxes = prevBoxesRef.current;
       let currBoxes = faces.map((f) => f.box);
 
-      // Interpolate positions
       let smoothBoxes = faces.map((face, i) => {
         if (!face.box) return null;
         let prev = prevBoxes && prevBoxes[i] ? prevBoxes[i] : face.box;
-        // Lerp each coordinate
         return prev.map((v, idx) => lerp(v, face.box[idx], 0.1));
       });
 
-      // Draw
       faces.forEach((face, i) => {
         if (face.box && smoothBoxes[i]) {
           const [x, y, w, h] = smoothBoxes[i];
           ctx.lineWidth = 4;
-          ctx.strokeStyle =
-            face.label === "Wearing Mask" ? "#22c55e" : "#ef4444";
+          const colorMap = {
+            green: "#22c55e",
+            red: "#ef4444"
+          };
+          ctx.strokeStyle = colorMap[face.color] || "#ef4444";
+          ctx.fillStyle = colorMap[face.color] || "#ef4444";
           ctx.strokeRect(x, y, w, h);
           ctx.font = "20px IBM Plex Sans Thai";
-          ctx.fillStyle = face.label === "Wearing Mask" ? "#22c55e" : "#ef4444";
-          // Show label and confidence
+          ctx.fillStyle = face.label === "ใส่แมส" ? "#22c55e" : "#ef4444";
+
           const conf =
             face.confidence !== undefined
               ? ` (${(face.confidence * 100).toFixed(1)}%)`
@@ -110,7 +107,6 @@ const FaceMaskDetection = () => {
         }
       });
 
-      // Save for next frame
       prevBoxesRef.current = faces.map((f) => f.box);
 
       animFrame = requestAnimationFrame(animateBoxes);
@@ -143,35 +139,55 @@ const FaceMaskDetection = () => {
 
   const handleDetectFaceMask = useCallback(() => {
     intervalRef.current = setInterval(async () => {
-      // if (!videoRef.current) return;
-      // Draw current frame to canvas
       const video = videoRef.current;
       const canvas = canvasRef.current;
-      // if (!canvas || video.videoWidth === 0 || video.videoHeight === 0) return;
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       const ctx = canvas.getContext("2d");
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const image = canvas.toDataURL("image/jpeg");
 
-      setIsDetecting(true);
-      try {
-        const { data } = await axios.post(
-          "http://localhost:5000/api/mask-detection",
-          {
-            image,
+      canvas.toBlob(async (blob) => {
+        if (!blob) return;
+        const formData = new FormData();
+        formData.append("file", blob, "frame.jpg");
+
+        setIsDetecting(true);
+        try {
+          const { data } = await axios.post(
+            "http://localhost:5000/api/mask-detection",
+            formData,
+            {
+              headers: {
+                "Content-Type": "multipart/form-data",
+              },
+            }
+          );
+
+          if (data.results && data.results.length > 0) {
+            data.results.forEach((face, idx) => {
+              console.log(
+                `Face #${idx + 1}: ${face.label} (confidence: ${(face.confidence * 100).toFixed(1)}%)`,
+                "box:", face.box
+              );
+            });
+          } else {
+            console.log("ไม่พบใบหน้า");
           }
-        );
-        setFaces(data.results || []);
-      } catch (err) {
-        if (err instanceof Error) {
-          setFaces([{ box: null, label: "Error", confidence: 0 }]);
-          handleCloseCamera();
-          handleShowErrorAlert(err.message);
+          setFaces(data.results || []);
+        } catch (err) {
+          if (err.response && err.response.data && err.response.data.error === "No face detected") {
+            // ไม่ต้องปิดกล้อง แค่ล้างกรอบหรือแสดงข้อความเตือน
+            setFaces([]);
+          } else {
+            // error อื่นๆ ค่อยปิดกล้อง
+            setFaces([{ box: null, label: "Error", confidence: 0 }]);
+            handleCloseCamera();
+            handleShowErrorAlert(err.message);
+          }
+        } finally {
+          setIsDetecting(false);
         }
-      } finally {
-        setIsDetecting(false);
-      }
+      }, "image/jpeg");
     }, 200);
   }, []);
 
@@ -275,9 +291,7 @@ const FaceMaskDetection = () => {
             ref={videoRef}
             className="bg-gradient-to-b from-neutral-950 via-neutral-900 bg-neutral-800 rounded-3xl w-full h-[450px] object-cover shadow-3xl border-8 border-black/80 box-border"
           />
-          {/* Hidden canvas for capturing frame */}
           <canvas ref={canvasRef} style={{ display: "none" }} />
-          {/* Overlay canvas for drawing rectangles */}
           <canvas
             ref={overlayRef}
             className="absolute top-0 left-0 w-full h-full pointer-events-none"
