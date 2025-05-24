@@ -12,7 +12,7 @@ const Members = () => {
       <Sidebar />
       <PageContent>
         <Title text="รายชื่อสมาชิกในกลุ่ม" />
-        <div className="w-full overflow-hidden flex items-center justify-evenly flex-wrap">
+        <div className="w-full overflow-hidden flex items-center justify-evenly flex-wrap m-auto -translate-y-10">
           <List>
             <ListItem>
               <ListItemText>
