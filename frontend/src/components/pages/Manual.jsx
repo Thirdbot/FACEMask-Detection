@@ -22,7 +22,7 @@ const Manual = () => {
           <div>
             <List
               subheader={
-                <ListSubheader sx={{ fontSize: "1rem" }}>
+                <ListSubheader sx={{ fontSize: "1rem" }} color="primary">
                   <span>
                     <TipsAndUpdatesRoundedIcon className="me-1" />
                     ข้อควรปฏิบัติก่อนใช้งาน
@@ -45,8 +45,7 @@ const Manual = () => {
                   primary={
                     <span>
                       2.)
-                      ตรวจสอบพื้นที่รอบข้างว่าที่ๆนั้นมีแสงสว่างเพียงพอไม่งั้น
-                      AI อาจจะทำนายผลลัพธ์ผิดได้
+                      ตรวจสอบให้แน่ใจว่าได้เชื่อมต่อกับสัญญาณอินเทอร์เน็ตหรือไม่
                     </span>
                   }
                 />
@@ -55,9 +54,9 @@ const Manual = () => {
                 <ListItemText
                   primary={
                     <span>
-                      3.) AI
-                      อาจจะทำนายค่าผลลัพธ์ผิดได้ถ้าหากตรวจพบวัตถุอื่นๆที่อยู่ในวิดีโอให้ทำการเคลียร์วัตถุอื่นๆที่อยู่บริเวณรอบข้างของคุณเพื่อทำให้
-                      AI ทำนายได้แม่นยำขึ้น
+                      3.)
+                      ตรวจสอบพื้นที่รอบข้างว่าที่ๆนั้นมีแสงสว่างเพียงพอหรือไม่
+                      ไม่งั้น AI อาจจะทำนายผลลัพธ์ผิดได้
                     </span>
                   }
                 />
@@ -66,8 +65,20 @@ const Manual = () => {
                 <ListItemText
                   primary={
                     <span>
-                      4.) หากไม่ต้องการใช้งานแล้วให้คลิกปุ่มปิดกล้องทันที ไม่งั้นตัว
-                      Server จะทำงานประมวลผลหนักเกินไปอาจทำให้ Server ล้มได้
+                      4.) AI
+                      อาจจะทำนายค่าผลลัพธ์ผิดได้หากตรวจพบวัตถุอื่นๆเป็นจำนวนมากในวิดีโอให้ทำการเคลียร์วัตถุอื่นๆที่อยู่บริเวณรอบข้างของคุณเพื่อทำให้
+                      AI ทำนายค่าได้แม่นยำขึ้น
+                    </span>
+                  }
+                />
+              </ListItem>
+              <ListItem>
+                <ListItemText
+                  primary={
+                    <span>
+                      5.) หากไม่ต้องการใช้งานแล้วให้คลิกปุ่มปิดกล้องทันที
+                      ไม่งั้นตัว Server จะทำงานประมวลผลหนักเกินไปอาจทำให้ Server
+                      ล้มได้
                     </span>
                   }
                 />
@@ -78,7 +89,7 @@ const Manual = () => {
           <div className="mt-4">
             <List
               subheader={
-                <ListSubheader sx={{ fontSize: "1rem" }}>
+                <ListSubheader sx={{ fontSize: "1rem" }} color="primary">
                   <span>
                     <InfoRoundedIcon className="me-1" />
                     ขั้นตอนการใช้งาน
