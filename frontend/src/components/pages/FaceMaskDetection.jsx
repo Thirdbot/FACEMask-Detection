@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { Button, ButtonGroup } from "@mui/material";
 import VideocamIcon from "@mui/icons-material/Videocam";
 import VideocamOffIcon from "@mui/icons-material/VideocamOff";
@@ -23,6 +23,7 @@ const FaceMaskDetection = () => {
   const [isErrorAlertShown, setIsErrorAlertShown] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [isDetecting, setIsDetecting] = useState(false);
+  const [errorCounter, setErrorCounter] = useState(0);
   const [faces, setFaces] = useState([]);
   const prevBoxesRef = useRef([]);
   const videoRef = useRef();
@@ -57,10 +58,6 @@ const FaceMaskDetection = () => {
     const overlay = overlayRef.current;
     const video = videoRef.current;
 
-    if (!overlay || !video) {
-      return;
-    }
-
     const ctx = overlay.getContext("2d");
     overlay.width = video.videoWidth;
     overlay.height = video.videoHeight;
@@ -76,8 +73,6 @@ const FaceMaskDetection = () => {
       }
 
       let prevBoxes = prevBoxesRef.current;
-      let currBoxes = faces.map((f) => f.box);
-
       let smoothBoxes = faces.map((face, i) => {
         if (!face.box) return null;
         let prev = prevBoxes && prevBoxes[i] ? prevBoxes[i] : face.box;
@@ -95,19 +90,20 @@ const FaceMaskDetection = () => {
           ctx.strokeStyle = colorMap[face.color] || "#ef4444";
           ctx.fillStyle = colorMap[face.color] || "#ef4444";
           ctx.strokeRect(x, y, w, h);
-          ctx.font = "20px IBM Plex Sans Thai";
-          ctx.fillStyle = face.label === "ใส่แมส" ? "#22c55e" : "#ef4444";
+          ctx.font = "28px 'IBM Plex Sans Thai'";
+          ctx.fillStyle = face.label === "Mask" ? "#22c55e" : "#ef4444";
 
           const conf =
             face.confidence !== undefined
               ? ` (${(face.confidence * 100).toFixed(1)}%)`
               : "";
-          ctx.fillText(face.label + conf, x, y - 10);
+          const thaiLabel =
+            face.label === "Mask" ? "ใส่หน้ากาก" : "ไม่ใส่หน้ากาก";
+          ctx.fillText(thaiLabel + conf, x, y - 10);
         }
       });
 
       prevBoxesRef.current = faces.map((f) => f.box);
-
       animFrame = requestAnimationFrame(animateBoxes);
     };
 
@@ -119,6 +115,13 @@ const FaceMaskDetection = () => {
       }
     };
   }, [faces, isCameraOpen]);
+
+  useEffect(() => {
+    if(errorCounter >= 5){
+      handleCloseCamera();
+      handleShowErrorAlert("เกิดข้อผิดพลาดขึ้นโปรดลองเปิดกล้องใหม่อีกครั้ง!");
+    }
+  }, [errorCounter]);
 
   const handleOpenCamera = useCallback(async () => {
     setIsCameraOpen(true);
@@ -138,6 +141,8 @@ const FaceMaskDetection = () => {
 
   const handleDetectFaceMask = useCallback(() => {
     intervalRef.current = setInterval(async () => {
+      setIsDetecting(true);
+
       const video = videoRef.current;
       const canvas = canvasRef.current;
       canvas.width = video.videoWidth;
@@ -150,7 +155,6 @@ const FaceMaskDetection = () => {
         const formData = new FormData();
         formData.append("file", blob, "frame.jpg");
 
-        setIsDetecting(true);
         try {
           const { data } = await axios.post(
             "http://localhost:5000/api/mask-detection",
@@ -162,7 +166,7 @@ const FaceMaskDetection = () => {
             }
           );
 
-          if (data.results && data.results.length > 0) {
+          if (data.results.length > 0) {
             data.results.forEach((face, idx) => {
               console.log(
                 `Face #${idx + 1}: ${face.label} (confidence: ${(face.confidence * 100).toFixed(1)}%)`,
@@ -170,29 +174,22 @@ const FaceMaskDetection = () => {
                 face.box
               );
             });
+            setFaces(data.results);
+            setErrorCounter(0);
           } else {
-            console.log("ไม่พบใบหน้า");
-          }
-          setFaces(data.results || []);
-        } catch (err) {
-          if (
-            err.response &&
-            err.response.data &&
-            err.response.data.error === "No face detected"
-          ) {
             setFaces([]);
-            handleShowErrorAlert("ไม่พบใบหน้า!");
-            setTimeout(() => setIsErrorAlertShown(false), 3000);
-          } else {
-            setFaces([{ box: null, label: "Error", confidence: 0 }]);
-            handleShowErrorAlert(err.message);
-            handleCloseCamera();
+          }
+        } catch (err) {
+          if (err instanceof AxiosError) {
+            console.error(err.response);
+            handleResponseError(err, err.status, err.response.data.error);
+            setErrorCounter((prev) => prev + 1);
           }
         } finally {
           setIsDetecting(false);
         }
       }, "image/jpeg");
-    }, 1000);
+    }, 600);
   }, []);
 
   const handleCloseCamera = useCallback(() => {
@@ -215,6 +212,17 @@ const FaceMaskDetection = () => {
 
   const handleCloseErrorAlert = useCallback(() => {
     setIsErrorAlertShown(false);
+  }, []);
+
+  const handleResponseError = useCallback((error, status, message) => {
+    if (status === 400 && message === "No face detected") {
+      setFaces([]);
+      handleShowErrorAlert("ไม่สามารถตรวจพบใบหน้าได้!");
+    } else {
+      setFaces([{ box: null, label: "Error", confidence: 0 }]);
+      handleShowErrorAlert(error.message);
+      // handleCloseCamera();
+    }
   }, []);
 
   return (

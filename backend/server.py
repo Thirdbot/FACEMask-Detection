@@ -13,9 +13,10 @@ input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
 
 def tflite_predict(input_img):
-    interpreter.set_tensor(input_details[0]['index'], input_img.astype(np.float32).copy())
+    input_img = input_img.astype(np.float32).copy()
+    interpreter.set_tensor(input_details[0]['index'], input_img)
     interpreter.invoke()
-    output = interpreter.get_tensor(output_details[0]['index']).copy()
+    output = np.array(interpreter.get_tensor(output_details[0]['index'])).copy()
     return output
 
 origins = ["http://localhost:5173"]
@@ -47,8 +48,10 @@ def detect_mask():
 
         input_img = preprocess_image(face_img)
         prediction = tflite_predict(input_img)
+        prediction = prediction.copy()
 
-        class_labels = ["No Mask", "Mask", "No_Mask."]  # ปรับชื่อ class ให้ตรงกับที่เทรน
+        # ปรับชื่อ class ให้ตรงกับที่เทรน
+        class_labels = ["No Mask", "Mask", "No_Mask."]
 
         pred_idx = int(np.argmax(prediction[0]))
         confidence = float(np.max(prediction[0]))
