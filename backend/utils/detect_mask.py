@@ -41,7 +41,7 @@ def preprocess_image(image):
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     image = image / 255.0
     image = np.expand_dims(image, 0)  # (1, 224, 224, 3)
-    return image.astype(np.float32)
+    return image.astype(np.float32).copy()
 
 def detect_and_crop_face(image):
     mp_face = mp.solutions.face_detection

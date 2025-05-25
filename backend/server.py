@@ -13,12 +13,12 @@ input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
 
 def tflite_predict(input_img):
-    interpreter.set_tensor(input_details[0]['index'], input_img.astype(np.float32))
+    interpreter.set_tensor(input_details[0]['index'], input_img.astype(np.float32).copy())
     interpreter.invoke()
-    output = interpreter.get_tensor(output_details[0]['index'])
+    output = interpreter.get_tensor(output_details[0]['index']).copy()
     return output
 
-origins = ["http://localhost:5173", "http://localhost:5174"]
+origins = ["http://localhost:5173"]
 
 @app.get("/")
 def index():

@@ -90,7 +90,7 @@ const FaceMaskDetection = () => {
           ctx.lineWidth = 4;
           const colorMap = {
             green: "#22c55e",
-            red: "#ef4444"
+            red: "#ef4444",
           };
           ctx.strokeStyle = colorMap[face.color] || "#ef4444";
           ctx.fillStyle = colorMap[face.color] || "#ef4444";
@@ -166,7 +166,8 @@ const FaceMaskDetection = () => {
             data.results.forEach((face, idx) => {
               console.log(
                 `Face #${idx + 1}: ${face.label} (confidence: ${(face.confidence * 100).toFixed(1)}%)`,
-                "box:", face.box
+                "box:",
+                face.box
               );
             });
           } else {
@@ -174,19 +175,24 @@ const FaceMaskDetection = () => {
           }
           setFaces(data.results || []);
         } catch (err) {
-          if (err.response && err.response.data && err.response.data.error === "No face detected") {
-            // ไม่ต้องปิดกล้อง แค่ล้างกรอบหรือแสดงข้อความเตือน
+          if (
+            err.response &&
+            err.response.data &&
+            err.response.data.error === "No face detected"
+          ) {
             setFaces([]);
+            handleShowErrorAlert("ไม่พบใบหน้า!");
+            setTimeout(() => setIsErrorAlertShown(false), 3000);
           } else {
-            // error อื่นๆ ค่อยปิดกล้อง
             setFaces([{ box: null, label: "Error", confidence: 0 }]);
             handleShowErrorAlert(err.message);
+            handleCloseCamera();
           }
         } finally {
           setIsDetecting(false);
         }
       }, "image/jpeg");
-    }, 200);
+    }, 1000);
   }, []);
 
   const handleCloseCamera = useCallback(() => {
@@ -292,16 +298,6 @@ const FaceMaskDetection = () => {
             ref={overlayRef}
             className="absolute top-0 left-0 w-full h-full pointer-events-none"
           />
-          {faces.length === 1 &&
-          faces[0].label &&
-          !faces[0].box &&
-          isCameraOpen ? (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-slate-50 px-6 py-2 rounded-xl text-xl font-bold z-20 select-none tracking-wide">
-              {isDetecting ? "กำลังตรวจสอบใบหน้า ..." : faces[0].label}
-            </div>
-          ) : (
-            <></>
-          )}
         </div>
         <ButtonGroup
           className="mt-6 w-full flex items-center justify-evenly"
