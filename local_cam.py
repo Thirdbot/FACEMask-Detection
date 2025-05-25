@@ -5,7 +5,7 @@ import numpy as np
 from FeatureExtraction import FeatureExtractor
 
 Home_dir = Path(__file__).parent.absolute()
-model_path = Home_dir / "save"  / "DeepLearning.h5"
+model_path = Home_dir / "save"  / "DecisionClass.h5"
 model = joblib.load(model_path)
 
 
@@ -25,7 +25,7 @@ face_cascade_params = {
     'flags': cv2.CASCADE_SCALE_IMAGE
 }
 
-label = ["with_mask","without_mask"]
+label = {"without_mask":1,"with_mask":0}
 # feature_extractor = FeatureExtractor(feature_type='hog', pixel_per_cell=(2,2), block_per_cell=(2,2))
 
 # Pre-allocate arrays for better performance
@@ -67,11 +67,11 @@ while True:
         else:
             prediction = model.predict(face_image)
         class_idx = int(np.argmax(prediction))
-        class_label = label[class_idx]
+        class_label = list(label.keys())[list(label.values()).index(class_idx)]
         confidence = float(prediction[0][class_idx])
         
         
-        color = (0, 255, 0) if class_idx == 0 else (0, 0, 255)
+        color = (0, 255, 0) if class_idx == label['with_mask'] else (0, 0, 255)
         label_text = f"{class_label} ({confidence:.2f})"
         
         cv2.rectangle(frame, (x, y), (x+w, y+h), color, 2)
