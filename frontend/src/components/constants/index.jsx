@@ -47,27 +47,22 @@ export const membersData = [
   {
     name: "นาย ปัณณวัฒน์ นิ่งเจริญ",
     studentId: 6630250231,
-    responsibility: "Tester",
   },
   {
     name: "นาย พันธุ์ธัช สุวรรณวัฒนะ",
     studentId: 6630250281,
-    responsibility: "สร้าง AI Model และ จัดการข้อมูล Dataset",
   },
   {
     name: "นาย ปุณณภพ มีฤทธิ์",
     studentId: 6630250291,
-    responsibility: "สร้าง, ฝึกสน และ ทดสอบ AI Model",
   },
   {
     name: "นาย วรินทร์ สายปัญญา",
     studentId: 6630250435,
-    responsibility: "Frontend",
   },
   {
     name: "นางสาว อัมพุชินิ บุญรักษ์",
     studentId: 6630250532,
-    responsibility: "Backend",
   },
 ];
 
