@@ -5,15 +5,6 @@ import cv2
 import numpy as np
 from utils.detect_mask import detect_mask_multi
 # from tensorflow.keras.models import load_model  # type: ignore
-<<<<<<< HEAD
-import joblib
-from pathlib import Path
-
-origin = "http://localhost:5173"
-home_path = Path(__file__).parent.parent.absolute()
-path = home_path / "save" / "DeepLearning.h5"
-model = joblib.load(path)
-=======
 
 import pathlib
 
@@ -21,7 +12,6 @@ backend_path = pathlib.Path(__file__).parent.absolute()
 origins = ["http://localhost:5173"]
 path = f"{backend_path}/models/DecisionClass.h5"
 # model = load_model(path)
->>>>>>> test_something
 
 app = Flask(__name__)
 
@@ -53,9 +43,4 @@ def predict():
             {"results": [{"box": None, "label": "Error", "confidence": None}]}
         )
 
-<<<<<<< HEAD
-if __name__ == "__main__":
-    app.run(debug=True)
-=======
 app.run(debug=True)
->>>>>>> test_something
