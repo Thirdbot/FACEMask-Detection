@@ -17,7 +17,7 @@ class DeepLearning:
         self.test_data = None
         self.num_classes = 2
         self.callback = None
-        self.color_channel = 1
+        self.color_channel = 3
 
     def __get_attribute__(self, item):
         return super(DeepLearning, self).__getattribute__(item)
@@ -27,37 +27,36 @@ class DeepLearning:
     
     def model_create(self):
         # สร้าง object ของ model
-        model = Sequential()
+        # model = Sequential()
         
-        # เพิ่มแต่ล่ะ convolution layers ให้ model
-        model.add(Conv2D(32, (3, 3), activation='relu', input_shape=(self.size, self.size, self.color_channel)))
-        model.add(BatchNormalization())
-        model.add(MaxPooling2D(pool_size=(2, 2)))
+        # # เพิ่มแต่ล่ะ convolution layers ให้ model
+        # model.add(Conv2D(32, (3, 3), activation='relu', input_shape=(self.size, self.size, self.color_channel)))
+        # model.add(BatchNormalization())
+        # model.add(MaxPooling2D(pool_size=(2, 2)))
 
-        # เพิ่มแต่ล่ะ convolution layers ให้ model
-        model.add(Conv2D(64, (3, 3), activation='relu'))
-        model.add(BatchNormalization())
-        model.add(MaxPooling2D(pool_size=(2, 2)))
+        # # เพิ่มแต่ล่ะ convolution layers ให้ model
+        # model.add(Conv2D(64, (3, 3), activation='relu'))
+        # model.add(BatchNormalization())
+        # model.add(MaxPooling2D(pool_size=(2, 2)))
 
-        # เพิ่มแต่ล่ะ convolution layers ให้ model
-        model.add(Conv2D(128, (3, 3), activation='relu'))
-        model.add(BatchNormalization())
-        model.add(MaxPooling2D(pool_size=(2, 2)))
+        # # เพิ่มแต่ล่ะ convolution layers ให้ model
+        # model.add(Conv2D(128, (3, 3), activation='relu'))
+        # model.add(BatchNormalization())
+        # model.add(MaxPooling2D(pool_size=(2, 2)))
 
-        # เพิ่มแต่ล่ะ convolution layers ให้ model
-        model.add(Conv2D(256, (3, 3), activation='relu'))
-        model.add(BatchNormalization())
-        model.add(MaxPooling2D(pool_size=(2, 2)))
+        # # เพิ่มแต่ล่ะ convolution layers ให้ model
+        # model.add(Conv2D(256, (3, 3), activation='relu'))
+        # model.add(BatchNormalization())
+        # model.add(MaxPooling2D(pool_size=(2, 2)))
 
-        # ลดมิติ
-        model.add(GlobalAveragePooling2D())
+        # # ลดมิติ
+        # model.add(GlobalAveragePooling2D())
 
-
-        model.add(Dense(512, activation='relu'))
-        model.add(Dropout(0.5))
-        model.add(Dense(512, activation='relu'))
-        model.add(Dropout(0.5))
-        model.add(Dense(self.num_classes, activation='softmax'))
+        # model.add(Dense(512, activation='relu'))
+        # model.add(Dropout(0.5))
+        # model.add(Dense(512, activation='relu'))
+        # model.add(Dropout(0.5))
+        # model.add(Dense(self.num_classes, activation='softmax'))
         
         # # # print(model.summary())
         
@@ -72,6 +71,25 @@ class DeepLearning:
         #     Dense(2, activation='softmax')  # Output layer for 2 classes
         # ])
         
+        model = Sequential([
+            Conv2D(32, (3,3), activation='relu', input_shape=(self.size, self.size, self.color_channel)), 
+            MaxPooling2D(2,2),
+            BatchNormalization(),
+            
+            Conv2D(64, (3,3), activation='relu'),
+            MaxPooling2D(2,2),
+            BatchNormalization(),
+            
+            Conv2D(128, (3,3), activation='relu'),
+            MaxPooling2D(2,2),
+            BatchNormalization(),
+            
+            Flatten(),
+            Dense(512, activation='relu'),
+            Dropout(0.3),
+            Dense(self.num_classes, activation='softmax') 
+        ])
+
         return model
     
     def _adapter(self):

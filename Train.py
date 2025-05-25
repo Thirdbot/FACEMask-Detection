@@ -6,7 +6,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'   # Reduce TensorFlow logging
 
 import re
 import time
-from datasetLoader import DatasetLoader
+from face_mask_dataloader import DatasetLoader  # Changed import to use new dataloader
 
 from pandas import DataFrame
 
@@ -30,11 +30,11 @@ os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 class Trainer:
     def __init__(self,path):
         self.size = 128
-        self.runtime = 2
-        self.model_project_name = "my_model"
-        self.data_project_name = "my_dataset"
+        self.runtime = 5
+        self.model_project_name = "face_mask_detection"  # Updated project name
+        self.data_project_name = "face_mask_dataset"     # Updated dataset name
         self.dataset_path = path
-        self.dataset_name = "cleaned_dataset"
+        self.dataset_name = "face_mask_dataset"
         
         self.train_data = None
         self.test_data = None
@@ -63,7 +63,7 @@ class Trainer:
                                       self.test_data,
                                       self.size)
         
-        self.model_list = ["DeepLearning","RFC", "KNNClass", "DecisionClass"]
+        self.model_list = ["DeepLearning", "RFC", "KNNClass","DecisionClass"]
                  
         
     def create_raw_dataset(self):
@@ -85,7 +85,8 @@ class Trainer:
         )
         self.log_model.loop_table(*self.whole_data)
         
-        return list(valid_generator.class_indices.keys())
+        # Get class labels from the dataloader wrapper
+        return self.dataset_loader.dataloader_wrapper.class_label
         
     def create_model(self, model_name, config=None):
         #select model from lib and model_name
@@ -129,13 +130,18 @@ class Trainer:
                 # Train the model
                 self.model = self.model_loader.train(self.model)
                 
-                # Save model and get metrics
-                model_path = self.model_loader.save_model(self.model, model_name)
+                #empty best_models
+                if not best_models.get(model_name):
+                    model_path = self.model_loader.save_model(self.model, model_name)
+                    # Save model and get metrics
+                    print(f"Saving {model_name} model")
                 eval_metrics = self.evaluate_model(model_name)
                 score_metrics = self.score_model(model_name)
                 
                 # Track best model for this model type
                 if model_name not in best_scores or eval_metrics[0] > best_scores[model_name]:
+                    print(f"New best model saved for {model_name} with accuracy: {eval_metrics[0]:.4f}")
+                    model_path = self.model_loader.save_model(self.model, model_name)
                     best_scores[model_name] = eval_metrics[0]
                     best_models[model_name] = {
                         'model_path': model_path,
@@ -146,9 +152,7 @@ class Trainer:
                             'recall': score_metrics[1]
                         },
                         'config': self.log_model.model_config
-                    }
-                    print(f"New best model saved for {model_name} with accuracy: {eval_metrics[0]:.4f}")
-                
+                    }                
                 # Log metrics with consistent naming
                 metrics = {
                     "val_accuracy": float(eval_metrics[0]),

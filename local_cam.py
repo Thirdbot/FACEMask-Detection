@@ -5,7 +5,7 @@ import numpy as np
 from FeatureExtraction import FeatureExtractor
 
 Home_dir = Path(__file__).parent.absolute()
-model_path = Home_dir / "backend" / "models"  / "DeepLearning.h5"
+model_path = Home_dir / "save"  / "DeepLearning.h5"
 model = joblib.load(model_path)
 
 
@@ -54,7 +54,7 @@ while True:
     for (x, y, w, h) in faces:
         face_image = frame[y:y+h, x:x+w]
         face_image = cv2.resize(face_image, face_size)
-        face_image = cv2.cvtColor(face_image, cv2.COLOR_BGR2GRAY)
+        # face_image = cv2.cvtColor(face_image, cv2.COLOR_BGR2GRAY)
         # Prepare image for model - simplified processing
         face_image = face_image.astype(np.float32) / 255.0
         # face_image = np.reshape(face_image, (1, -1))\
@@ -70,7 +70,7 @@ while True:
         class_label = label[class_idx]
         confidence = float(prediction[0][class_idx])
         
-        # Set color based on prediction (green for mask, red for no mask)
+        
         color = (0, 255, 0) if class_idx == 0 else (0, 0, 255)
         label_text = f"{class_label} ({confidence:.2f})"
         

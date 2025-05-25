@@ -37,9 +37,9 @@ class LogModel:
                 "DeepLearning": {
                     "parameters": {
                         "batch_size": {"values": [16,32,64]},
-                        "epochs": {"values": [5,10]},
-                        "optimizer": {"values": ["adam","sgd"]},
-                        "lr": {"values": [0.001,0.01,0.1,0.0001,0.00000001]}
+                        "epochs": {"values": [10,20,30,50,100]},
+                        "optimizer": {"values": ["adam"]},
+                        "lr": {"values": [0.001,0.01,0.0001,0.00000001]}
                     }
                 },
                 "RFC": {
