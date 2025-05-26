@@ -15,7 +15,7 @@ class ModelLoader:
         }
         self.selected = "DeepLearning"
         self.save_folder = Path(__file__).parent.absolute()
-        self.save_folder = self.save_folder / "save"
+        self.save_folder = self.save_folder / "backend" / "models"
         os.makedirs(self.save_folder,exist_ok=True)
         
         self.func = self.import_function(self.model_function[self.selected],self.selected)

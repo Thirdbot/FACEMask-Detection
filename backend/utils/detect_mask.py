@@ -5,55 +5,51 @@ from pathlib import Path
 # Load Haar cascade for face detection
 
 Home_dir = Path(__file__).parent.parent.absolute()
-harcascade_path = Home_dir / "haarcascade_frontalface_default.xml"
-harcascade = cv2.CascadeClassifier(harcascade_path)
 categories = ["with_mask","without_mask"]
 
-def preprocess_image(frame):
-    """Preprocess image for better face detection"""
-    # Convert to grayscale
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    # Apply histogram equalization
-    gray = cv2.equalizeHist(gray)
-    # Apply Gaussian blur to reduce noise
-    gray = cv2.GaussianBlur(gray, (5, 5), 0)
-    return gray
+
 
 def detect_mask_multi(frame, model):
     results = []
     try:
         name = model.split("/")[-1]
         name = name.split(".")[0]
-        # Preprocess image
-        gray = preprocess_image(frame)
-        
+       
         # Load model
         model_loaded = joblib.load(model)
         
-        # Detect faces with optimized parameters
-        faces = harcascade.detectMultiScale(
-            gray,
-            scaleFactor=1.2,  # Increased for faster processing
-            minNeighbors=5,   # Increased for better accuracy
-            minSize=(30, 30), # Minimum face size
-            maxSize=(300, 300) # Maximum face size
+        # Load OpenCV DNN face detector
+        face_net = cv2.dnn.readNetFromCaffe(
+            "deploy.prototxt", 
+            "res10_300x300_ssd_iter_140000.caffemodel"
         )
         
-        # Sort faces by size (largest first) to prioritize main faces
-        faces = sorted(faces, key=lambda x: x[2] * x[3], reverse=True)
+        (h, w) = frame.shape[:2]
+         # Preprocess the frame for DNN face detection
+        blob = cv2.dnn.blobFromImage(frame, 1.0, (300, 300),
+                                 (104.0, 177.0, 123.0))
+        face_net.setInput(blob)
+        detections = face_net.forward()
         
-        for face in faces:
-            x, y, w, h = face
+        for i in range(detections.shape[2]):
+            confidence = detections[0, 0, i, 2]
+
+            # Filter weak detections
+            if confidence < 0.3:
+                continue
+             # Get face bounding box
+            box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
+            (x, y, x1, y1) = box.astype("int")
+
+            # Ensure box is within frame bounds
+            x, y = max(0, x), max(0, y)
+            x1, y1 = min(w, x1), min(h, y1)
+
+            face_img = frame[y:y1, x:x1]
+
+            if face_img.size == 0:
+                continue
             
-            # Add padding to face region
-            padding = int(min(w, h) * 0.1)  # 10% padding
-            x1 = max(0, x - padding)
-            y1 = max(0, y - padding)
-            x2 = min(frame.shape[1], x + w + padding)
-            y2 = min(frame.shape[0], y + h + padding)
-            
-            # Extract and preprocess face
-            face_img = frame[y1:y2, x1:x2]
             resized_face = cv2.resize(face_img, (128, 128))
             normalized_face = resized_face / 255.0
             input_face = np.expand_dims(normalized_face, axis=0)
@@ -68,7 +64,7 @@ def detect_mask_multi(frame, model):
             
             friendly = "Wearing Mask" if class_label == "with_mask" else "No Mask"
             results.append({
-                "box": [int(x1), int(y1), int(x2-x1), int(y2-y1)],
+                "box": [int(x), int(y), int(x1), int(y1)],
                 "label": friendly,
                 "confidence": confidence
             })
