@@ -2,8 +2,6 @@ import joblib
 import cv2
 from pathlib import Path
 import numpy as np
-from FeatureExtraction import FeatureExtractor
-
 Home_dir = Path(__file__).parent.absolute()
 model_path = Home_dir / "backend"  / "models" / "DeepLearning.h5"
 model = joblib.load(model_path)
