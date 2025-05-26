@@ -8,6 +8,7 @@ from sklearn.model_selection import train_test_split
 from tensorflow.keras.models import Sequential, load_model # type: ignore
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout, BatchNormalization # type: ignore
 from tensorflow.keras.preprocessing.image import ImageDataGenerator # type: ignore
+import tensorflow as tf
 
 xml_folder = "../Ai_test/Check the masked person/annotations"
 img_folder = "../Ai_test/Check the masked person/images"
@@ -101,4 +102,12 @@ model.evaluate(x_test, y_test)
 
 model.save('Full_modelRGB.h5')
 
+# โหลดโมเดล (optional)
 model = load_model("Full_modelRGB.h5")
+
+# แปลงเป็น TensorFlow Lite (ลดขนาดโมเดล)
+converter = tf.lite.TFLiteConverter.from_keras_model(model)
+converter.optimizations = [tf.lite.Optimize.DEFAULT]
+tflite_model = converter.convert()
+with open('model_quant.tflite', 'wb') as f:
+    f.write(tflite_model)

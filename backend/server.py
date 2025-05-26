@@ -1,14 +1,23 @@
 from flask import Flask, request, jsonify
 from flask_cors import cross_origin
-from tensorflow.keras.models import load_model  # type: ignore
-from utils.detect_mask import preprocess_image, detect_and_crop_face
 import numpy as np
 import cv2
+import tensorflow as tf
+from utils.detect_mask import preprocess_image, detect_and_crop_face
 
 app = Flask(__name__)
 
-model = load_model('./models/Full_modelRGB.h5', compile=False)
-print("Model input shape:", model.input_shape)  # เพิ่มบรรทัดนี้เพื่อดู input shape
+interpreter = tf.lite.Interpreter(model_path='./models/model_quant.tflite')
+interpreter.allocate_tensors()
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
+
+def tflite_predict(input_img):
+    input_img = input_img.astype(np.float32).copy()
+    interpreter.set_tensor(input_details[0]['index'], input_img)
+    interpreter.invoke()
+    output = np.array(interpreter.get_tensor(output_details[0]['index'])).copy()
+    return output
 
 origins = ["http://localhost:5173"]
 
@@ -35,13 +44,14 @@ def detect_mask():
         # ตรวจจับใบหน้าและเก็บตำแหน่งกรอบ
         face_img, box = detect_and_crop_face(img)
         if face_img is None:
-            return jsonify({'error': 'No face detected'}), 400
+            return jsonify({'error': 'No face detected'}), 200
 
         input_img = preprocess_image(face_img)
-        prediction = model.predict(input_img)
-        print("prediction:", prediction)
+        prediction = tflite_predict(input_img)
+        prediction = prediction.copy()
 
-        class_labels = ["No Mask", "Mask", "No_Mask."]  # ปรับชื่อ class ให้ตรงกับที่เทรน
+        # ปรับชื่อ class ให้ตรงกับที่เทรน
+        class_labels = ["No Mask", "Mask", "No_Mask."]
 
         pred_idx = int(np.argmax(prediction[0]))
         confidence = float(np.max(prediction[0]))
@@ -62,4 +72,4 @@ def detect_mask():
         return jsonify({"results": [result]})
     except Exception as e:
         print("Error:", e)
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "ไม่พบใบหน้า"}), 200
