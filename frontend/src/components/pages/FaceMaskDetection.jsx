@@ -190,7 +190,7 @@ const FaceMaskDetection = () => {
           setIsDetecting(false);
         }
       }, "image/jpeg");
-    }, 600);
+    }, 500);
   }, []);
 
   const handleCloseCamera = useCallback(() => {
@@ -222,7 +222,6 @@ const FaceMaskDetection = () => {
     } else {
       setFaces([{ box: null, label: "Error", confidence: 0 }]);
       handleShowErrorAlert(error.message);
-      // handleCloseCamera();
     }
   }, []);
 
