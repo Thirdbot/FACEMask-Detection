@@ -81,3 +81,8 @@ export const settingsReducer = (
       throw new Error("ไม่สามารถอัปเดตการตั้งค่าได้!");
   }
 };
+
+
+export const lerp = (a, b, t) => {
+  return a + (b - a) * t;
+};

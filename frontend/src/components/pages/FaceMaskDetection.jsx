@@ -15,7 +15,7 @@ import AppContainer from "../containers/AppContainer";
 import Sidebar from "../ui/Sidebar";
 import PageContent from "../containers/PageContent";
 import Title from "../ui/Title";
-import { getMediaStreamConstraints, loadSettings } from "../../utils/helper";
+import { getMediaStreamConstraints, loadSettings, lerp } from "../../utils/helper";
 
 const FaceMaskDetection = () => {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -62,10 +62,6 @@ const FaceMaskDetection = () => {
     const ctx = overlay.getContext("2d");
     overlay.width = video.videoWidth;
     overlay.height = video.videoHeight;
-
-    const lerp = (a, b, t) => {
-      return a + (b - a) * t;
-    };
 
     const animateBoxes = () => {
       ctx.clearRect(0, 0, overlay.width, overlay.height);
@@ -190,7 +186,7 @@ const FaceMaskDetection = () => {
           setIsDetecting(false);
         }
       }, "image/jpeg");
-    }, 500);
+    }, 200);
   }, []);
 
   const handleCloseCamera = useCallback(() => {

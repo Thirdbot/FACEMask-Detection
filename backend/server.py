@@ -44,7 +44,7 @@ def detect_mask():
         # ตรวจจับใบหน้าและเก็บตำแหน่งกรอบ
         face_img, box = detect_and_crop_face(img)
         if face_img is None:
-            return jsonify({'error': 'No face detected'}), 400
+            return jsonify({'error': 'No face detected'}), 200
 
         input_img = preprocess_image(face_img)
         prediction = tflite_predict(input_img)
@@ -72,4 +72,4 @@ def detect_mask():
         return jsonify({"results": [result]})
     except Exception as e:
         print("Error:", e)
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "ไม่พบใบหน้า"}), 200
