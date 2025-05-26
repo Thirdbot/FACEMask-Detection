@@ -27,5 +27,3 @@ env
 save/
 __pycache__
 wandb/
-
-Full_modelRGB.h5
