@@ -23,6 +23,7 @@ def detect_mask_multi(frame, model):
     results = []
     try:
         name = model.split("/")[-1]
+        name = name.split(".")[0]
         # Preprocess image
         gray = preprocess_image(frame)
         
