@@ -1,53 +1,12 @@
-## 😷 FACEMask Detection
-ระบบตรวจจับการสวมหน้ากากอนามัยแบบ Real-Time ด้วยกล้อง Webcam โดยใช้เทคโนโลยี Machine Learning และ Deep Learning ทำงานร่วมกับระบบ Frontend และ Backend
+# React + Vite
 
-## 📌 รายละเอียดโปรเจกค์
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-โปรเจกต์นี้พัฒนาเพื่อช่วยตรวจจับว่าแต่ละบุคคลในภาพจากกล้องสวมหน้ากากอนามัยหรือไม่ ด้วยการใช้โมเดล Deep Learning ที่ฝึกมาแล้ว ระบบจะทำงานผ่านกล้อง Webcam และแจ้งเตือนหากพบว่ามีคนไม่สวมหน้ากาก
+Currently, two official plugins are available:
 
----
-## 📦 Clone Project
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-```bash
-git clone https://github.com/Thirdbot/FACEMask-Detection.git
-cd FACEMask-Detection
-```
-## Frontend
-```bash
-# เข้าไปยังโฟลเดอร์ frontend
-cd frontend
+## Expanding the ESLint configuration
 
-# ติดตั้ง dependencies
-npm install
-
-# รันเซิร์ฟเวอร์พัฒนา (React Vite)
-npm run dev
-```
-
-## Backend
-```bash
-# กลับไปโฟลเดอร์โปรเจกต์หลัก
-cd ../backend
-
-# สร้าง Python virtual environment
-python -m venv env
-
-# เปิดใช้งาน virtual environment (Windows)
-env\Scripts\activate
-
-# สำหรับ Mac/Linux ให้ใช้
-source env/bin/activate
-
-# ติดตั้ง dependencies
-pip install -r requirements.txt
-
-# รัน Flask backend
-flask --app server run
-```
-
-## จัดทำโดย
-1. นาย 	ปัณณวัฒน์ นิ่งเจริญ รหัสนิสิต 6630250231
-2. นาย 	พันธุ์ธัช สุวรรณวัฒนะ รหัสนิสิต 6630250281
-3. นาย 	วรินทร์ สายปัญญา รหัสนิสิต 6630250435
-4. นางสาว อัมพุชินี บุญรักษ์ รหัสนิสิต 6630250532
-5. นาย 	ปุณณภพ มีฤทธิ์ รหัสนิสิต 6630250591
+If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
