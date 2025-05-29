@@ -5,13 +5,13 @@ a = Analysis(
     ['program.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[('KUfacemask.png', '.'), ('face_mask_detector.h5', '.'), ('deploy.prototxt', '.'), ('res10_300x300_ssd_iter_140000.caffemodel', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[],
-    noarchive=True,
+    noarchive=False,
     optimize=0,
 )
 pyz = PYZ(a.pure)
@@ -21,9 +21,9 @@ exe = EXE(
     a.scripts,
     a.binaries,
     a.datas,
-    [('v', None, 'OPTION')],
+    [],
     name='program',
-    debug=True,
+    debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
@@ -35,4 +35,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon=['KUfacemask.ico'],
 )
