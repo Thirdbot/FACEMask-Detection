@@ -5,6 +5,7 @@ import numpy as np
 from tensorflow.keras.models import load_model  
 import threading
 import tkinter as tk  
+import os
 
 after_id = None
 
@@ -17,6 +18,8 @@ main_window = ctk.CTk()
 main_window.title("KU FaceMask")
 main_window.geometry("1200x700")
 main_window.resizable(True, True)
+
+icon_path = os.path.join(os.getcwd(), "KUfacemask.ico")
 main_window.iconbitmap("KUfacemask.ico")
 
 # Configure grid layout for responsiveness
