@@ -103,3 +103,6 @@ def detect_mask():
     except Exception as e:
         print("Error:", e)
         return jsonify({"error": "ไม่พบใบหน้า"}), 200
+
+
+app.run()
