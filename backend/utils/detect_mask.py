@@ -6,8 +6,8 @@ import mediapipe as mp
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 categories = ["with_mask", "without_mask"]
     
-def preprocess_image(image):
-    image = cv2.resize(image, (224, 224))  # width, height
+def preprocess_image(image,size=224):
+    image = cv2.resize(image, (size, size))  # width, height
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     image = image / 255.0
     image = np.expand_dims(image, 0)  # (1, 224, 224, 3)

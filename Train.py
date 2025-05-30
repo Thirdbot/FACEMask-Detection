@@ -86,6 +86,7 @@ class Trainer:
         self.log_model.loop_table(*self.whole_data)
         
         # Get class labels from the dataloader wrapper
+        print(f"Class labels: {list(valid_generator.class_indices.keys())}")
         return list(valid_generator.class_indices.keys())
         
     def create_model(self, model_name, config=None):

@@ -3,7 +3,7 @@ import cv2
 from pathlib import Path
 import numpy as np
 Home_dir = Path(__file__).parent.absolute()
-model_path = Home_dir / "backend"  / "models" / "DecisionClass.h5"
+model_path = Home_dir / "backend"  / "models" / "RFC.h5"
 model = joblib.load(model_path)
 
 
@@ -26,7 +26,7 @@ face_net = cv2.dnn.readNetFromCaffe(
 )
 
 
-label = {"without_mask":1,"with_mask":0}
+label = {"with_mask":0,"without_mask":1}
 # feature_extractor = FeatureExtractor(feature_type='hog', pixel_per_cell=(2,2), block_per_cell=(2,2))
 
 # Pre-allocate arrays for better performance

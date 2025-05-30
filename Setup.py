@@ -8,6 +8,5 @@ dataset_path = Home_dir / "cleaned_dataset" / "data"
 
 trainer = Trainer(path=dataset_path)
 save_best = trainer.train_all()
-
 print(save_best)
 
