@@ -1,16 +1,10 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router";
 import { Tooltip } from "@mui/material";
-import { isTrue } from "../../utils/helper";
 
-const MenuItem = ({ text, icon, pathname }) => {
-  const [isExpanded, setIsExpanded] = useState(true);
+const MenuItem = ({ text, icon, pathname, isExpanded }) => {
   const [isActive, setIsActive] = useState(false);
   const location = useLocation();
-
-  useEffect(() => {
-    setIsExpanded(isTrue(localStorage.getItem("isExpanded")));
-  }, []);
 
   useEffect(() => {
     setIsActive(location.pathname === pathname);

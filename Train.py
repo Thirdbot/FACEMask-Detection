@@ -7,7 +7,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'   # Reduce TensorFlow logging
 import re
 import time
 # from face_mask_dataloader import DatasetLoader  # For a model with xml
-from datasetLoader import DatasetLoader
+from module.datasetLoader import DatasetLoader
 
 from pandas import DataFrame
 

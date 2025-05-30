@@ -25,8 +25,15 @@ dist-ssr
 
 env
 save/
+<<<<<<< HEAD
 __pycache__/
 models/__pycache__/
 wandb/
 
 backend/models/
+=======
+__pycache__
+wandb/
+
+Full_modelRGB.h5
+>>>>>>> origin
