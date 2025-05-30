@@ -12,6 +12,7 @@ git clone https://github.com/Thirdbot/FACEMask-Detection.git
 cd FACEMask-Detection
 ```
 program
+อ่านได้ที่ [program](https://github.com/Thirdbot/FACEMask-Detection/tree/programeiei)
 ```bash
 git clone --single-branch --branch programeiei https://github.com/Thirdbot/FACEMask-Detection.git
 
