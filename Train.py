@@ -30,7 +30,7 @@ os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 class Trainer:
     def __init__(self,path):
         self.size = 128
-        self.runtime = 5
+        self.runtime = 3
         self.model_project_name = "face_mask_detection"  
         self.data_project_name = "face_mask_dataset"    
         self.dataset_path = path

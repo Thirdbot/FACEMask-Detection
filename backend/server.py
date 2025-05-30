@@ -35,7 +35,7 @@ def tflite_predict(input_img):
 
 #train model
 model_name = "KNNClass"
-train_model_path = Path(__file__).parent.parent.absolute() / "save" / f"{model_name}.h5"
+train_model_path = Path(__file__).parent.parent.absolute() / "backend" / "models" / f"{model_name}.h5"
 def use_train_model(input_img):
     try:
         model = joblib.load(train_model_path)
