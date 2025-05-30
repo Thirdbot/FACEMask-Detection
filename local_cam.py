@@ -2,9 +2,14 @@ import joblib
 import cv2
 from pathlib import Path
 import numpy as np
+import tensorflow as tf
+import warnings
+warnings.filterwarnings('ignore', category=UserWarning)
+tf.get_logger().setLevel('ERROR')
+
+
 Home_dir = Path(__file__).parent.absolute()
 model_path = Home_dir / "backend"  / "models" / "RFC.h5"
-model = joblib.load(model_path)
 
 
 
@@ -26,14 +31,34 @@ face_net = cv2.dnn.readNetFromCaffe(
 )
 
 
-label = {"with_mask":0,"without_mask":1}
-# feature_extractor = FeatureExtractor(feature_type='hog', pixel_per_cell=(2,2), block_per_cell=(2,2))
+label = {"with_mask":0,"without_mask":1,"mask_weared_incorrect":2}
 
 # Pre-allocate arrays for better performance
-face_size = (128, 128)
+face_size = (224, 224)
 frame_count = 0
 skip_frames = 2  # Process every 3rd frame
-name = Path(model_path).stem
+
+#use with trained model
+def use_train_model(face_image):
+    name = Path(model_path).stem
+    model = joblib.load(model_path)
+    # Make prediction
+    if name != "DeepLearning":
+        face_image = np.reshape(face_image, (1, -1))
+        prediction = model.predict(face_image)
+    else:
+        prediction = model.predict(face_image)
+    return prediction
+
+def tflite_predict(input_img):
+    interpreter = tf.lite.Interpreter(model_path='./model_quant.tflite')
+    interpreter.allocate_tensors()
+    input_details = interpreter.get_input_details()
+    output_details = interpreter.get_output_details()
+    interpreter.set_tensor(input_details[0]['index'], input_img)
+    interpreter.invoke()
+    return interpreter.get_tensor(output_details[0]['index'])
+
 print("Press 'q' to quit")
 
 while True:
@@ -85,12 +110,7 @@ while True:
         # face_image = np.reshape(face_image, (1, -1))\
         face_image = np.expand_dims(face_image, axis=0)
         
-        # Make prediction
-        if name != "DeepLearning":
-            face_image = np.reshape(face_image, (1, -1))
-            prediction = model.predict(face_image)
-        else:
-            prediction = model.predict(face_image)
+        prediction = tflite_predict(face_image)
         class_idx = int(np.argmax(prediction))
         class_label = list(label.keys())[list(label.values()).index(class_idx)]
         confidence = float(prediction[0][class_idx])

@@ -8,17 +8,21 @@ def run_train():
     dataset_path = Home_dir / "cleaned_dataset" / "data"
 
     trainer = Trainer(path=dataset_path)
+    
+    #กำหนดอบเทรน config (sweep model)
+    trainer.runtime = 3
 
-    ###model list 
-    model_list = ["DeepLearning","DecisionClass","KNNClass","RFC"]
+    ###model list  ["DeepLearning","DecisionClass","KNNClass","RFC"]
     model_name = "DeepLearning"
 
-    #using with single train
+    #เทรนโมเดล 1 ตัว ให้สร้างโมเดลเเละเทรน
     trainer.create_model(model_name)
     save_best = trainer.train(model_name)
-    #using without declare creating model
+    
+    #เทรนโมเดลทั้งหมด ไม่ต้องสร้างโมเดล
     # save_best = trainer.train_all()
 
+    #ดูผลการเทรน
     print("save_best",save_best)
 
 if __name__ == "__main__":

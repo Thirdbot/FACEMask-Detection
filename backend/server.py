@@ -21,7 +21,7 @@ app = Flask(__name__)
 
 # Load model with custom_objects to handle any custom layers
 
-size = 128
+size = 224
 
 #pretrain model NOTE: this model use size of 224
 def tflite_predict(input_img):
@@ -33,20 +33,20 @@ def tflite_predict(input_img):
     interpreter.invoke()
     return interpreter.get_tensor(output_details[0]['index'])
 
-#train model
-model_name = "KNNClass"
-train_model_path = Path(__file__).parent.parent.absolute() / "backend" / "models" / f"{model_name}.h5"
-def use_train_model(input_img):
-    try:
-        model = joblib.load(train_model_path)
-        if model_name == "DeepLearning":
-            return model.predict(input_img)
-        else:
-            input_img = np.reshape(input_img, (1, -1))
-            return model.predict(input_img)
-    except Exception as e:
-        print(f"Error predicting: {e}")
-        return None
+#use with trained model (optional) 
+# model_name = "KNNClass"
+# train_model_path = Path(__file__).parent.parent.absolute() / "backend" / "models" / f"{model_name}.h5"
+# def use_train_model(input_img):
+#     try:
+#         model = joblib.load(train_model_path)
+#         if model_name == "DeepLearning":
+#             return model.predict(input_img)
+#         else:
+#             input_img = np.reshape(input_img, (1, -1))
+#             return model.predict(input_img)
+#     except Exception as e:
+#         print(f"Error predicting: {e}")
+#         return None
 
 origins = ["http://localhost:5173"]
 
@@ -77,7 +77,7 @@ def detect_mask():
             return jsonify({'error': 'No face detected'}), 200
 
         input_img = preprocess_image(face_img, size)
-        prediction = use_train_model(input_img)
+        prediction = tflite_predict(input_img)
         prediction = prediction.copy()
 
         # ปรับชื่อ class ให้ตรงกับที่เทรน
