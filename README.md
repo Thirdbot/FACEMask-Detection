@@ -1,10 +1,10 @@
-## 😷 FACEMask Detection
+## 😷 Face Mask Detection
 ระบบตรวจจับการสวมหน้ากากอนามัยแบบ Real-Time ด้วยกล้อง Webcam โดยใช้เทคโนโลยี Machine Learning และ Deep Learning ทำงานร่วมกับระบบ Frontend และ Backend
 
 ## 📌 รายละเอียดโปรเจกค์
 โปรเจกต์นี้พัฒนาเพื่อช่วยตรวจจับว่าแต่ละบุคคลในภาพจากกล้องสวมหน้ากากอนามัยหรือไม่ ด้วยการใช้โมเดล Deep Learning ที่ฝึกมาแล้ว ระบบจะทำงานผ่านกล้อง Webcam และแจ้งเตือนหากพบว่ามีคนไม่สวมหน้ากาก
 
-## 🌐 เว็บไซต์
+## 🌐 Website
 ลิ้งค์ใช้งานเว็บไซต์ [KU FaceMask](https://ku-face-mask-frontend.vercel.app)
 
 ## 📦 Clone Project
@@ -49,8 +49,9 @@ python .\Setup.py
 
 
 ## Frontend
+เปิด Terminal (เวลาใช้งานในส่วนของตัวเว็บไซต์จะต้องเปิด Terminal ทั้ง 2 ส่วนในส่วนของ Frontend และ Backend)
 ```bash
-# เข้าไปยังโฟลเดอร์ frontend
+# เข้าไปยัง directory frontend
 cd frontend
 
 # ติดตั้ง dependencies
@@ -61,9 +62,10 @@ npm run dev
 ```
 ---
 ## Backend
+เปิด Terminal อันใหม่
 ```bash
-# กลับไปโฟลเดอร์โปรเจกต์หลัก
-cd ../backend
+# เข้าไปยัง directory backend
+cd backend
 
 # สร้าง Python virtual environment
 python -m venv env
@@ -81,7 +83,6 @@ pip install -r requirements.txt
 flask --app server run
 ```
 ---
-
 
 
 ## จัดทำโดย
