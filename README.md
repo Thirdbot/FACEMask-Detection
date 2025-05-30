@@ -33,6 +33,7 @@ pip install -r requirements.txt
 ---
 
 ## (Optional) การ เทรนนิ่ง <font color=orange>ใช้เวลานาน เเละ ใช้GPU</font> หรือ ใช้ colab 
+<font color=orange>เทรนใน colab </font> ต้องย้ายไฟล์ model เข้าที่ local repository ในโฟลเดอร์เดียวกัน ของเครื่องเพื่อใช้งาน
 1. เพื่อ monitoring โมเดล ต้องสมัคร Account ของ [WANDB](https://wandb.ai/site)
 2. เเก้ไขconfig เริ่มต้นใน startlog.py
 3. สร้างโมเดลเเละเทรน หรือ เทรน ทุกโมเดล โดย ตั้งค่าใน setup.py
@@ -41,7 +42,8 @@ pip install -r requirements.txt
 cd FACEMask-Detection
 python .\Setup.py
 ```
-ในการเทรน จะมีreal time monitor <font color=lightgreen>(ดูได้โดยการกดlinkหลังเทรนจบ)</font> เเละ โมเดลทั้งหมดที่เทรนจะถูกเก็บไว้ใน <font color="orange">./backend/models </font>
+ในการเทรน จะมี real time monitor <font color=lightgreen>(ดูได้โดยการกดlinkหลังเทรนจบ)</font> เเละ โมเดลทั้งหมดที่เทรนจะถูกเก็บไว้ใน <font color="orange">./backend/models </font>
+
 
 ## Frontend
 ```bash
