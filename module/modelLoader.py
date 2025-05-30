@@ -11,7 +11,7 @@ class ModelLoader:
             "KNNClass":"models.KNNClass",
             "RFC":"models.RFC"
         }
-        self.Home_dir = Path(__file__).parent.absolute()
+        self.Home_dir = Path(__file__).parent.parent.absolute()
         self.save_folder = self.Home_dir / "backend" / "models"
         self.selected = None
         self.train_data = train
