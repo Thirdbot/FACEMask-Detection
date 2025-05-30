@@ -3,23 +3,53 @@ from flask_cors import cross_origin
 import numpy as np
 import cv2
 import tensorflow as tf
+import warnings
 from utils.detect_mask import preprocess_image, detect_and_crop_face
+from pathlib import Path
+import joblib
+# Suppress TensorFlow warnings
+warnings.filterwarnings('ignore', category=UserWarning)
+tf.get_logger().setLevel('ERROR')
 
 app = Flask(__name__)
 
-interpreter = tf.lite.Interpreter(model_path='./models/model_quant.tflite')
-interpreter.allocate_tensors()
-input_details = interpreter.get_input_details()
-output_details = interpreter.get_output_details()
 
+# interpreter = tf.lite.Interpreter(model_path='./model_quant.tflite')
+# interpreter.allocate_tensors()
+# input_details = interpreter.get_input_details()
+# output_details = interpreter.get_output_details()
+
+# Load model with custom_objects to handle any custom layers
+
+size = 224
+
+#pretrain model NOTE: this model use size of 224
 def tflite_predict(input_img):
-    input_img = input_img.astype(np.float32).copy()
+    interpreter = tf.lite.Interpreter(model_path='./model_quant.tflite')
+    interpreter.allocate_tensors()
+    input_details = interpreter.get_input_details()
+    output_details = interpreter.get_output_details()
     interpreter.set_tensor(input_details[0]['index'], input_img)
     interpreter.invoke()
-    output = np.array(interpreter.get_tensor(output_details[0]['index'])).copy()
-    return output
+    return interpreter.get_tensor(output_details[0]['index'])
+
+#use with trained model (optional) 
+# model_name = "KNNClass"
+# train_model_path = Path(__file__).parent.parent.absolute() / "backend" / "models" / f"{model_name}.h5"
+# def use_train_model(input_img):
+#     try:
+#         model = joblib.load(train_model_path)
+#         if model_name == "DeepLearning":
+#             return model.predict(input_img)
+#         else:
+#             input_img = np.reshape(input_img, (1, -1))
+#             return model.predict(input_img)
+#     except Exception as e:
+#         print(f"Error predicting: {e}")
+#         return None
 
 origins = ["http://localhost:5173"]
+
 
 @app.get("/")
 def index():
@@ -46,7 +76,7 @@ def detect_mask():
         if face_img is None:
             return jsonify({'error': 'No face detected'}), 200
 
-        input_img = preprocess_image(face_img)
+        input_img = preprocess_image(face_img, size)
         prediction = tflite_predict(input_img)
         prediction = prediction.copy()
 
@@ -73,3 +103,6 @@ def detect_mask():
     except Exception as e:
         print("Error:", e)
         return jsonify({"error": "ไม่พบใบหน้า"}), 200
+
+
+app.run()
