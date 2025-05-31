@@ -1,12 +1,121 @@
-import tkinter as tk
-from tkinter import Label
-import cv2
+import customtkinter as ctk
 from PIL import Image, ImageTk
+import cv2
 import numpy as np
+import threading
 import tensorflow as tf
+import mediapipe as mp
+import os
+import sys
+import time
+
+# --- Safe file loading for PyInstaller ---
+def resource_path(relative_path):
+    if hasattr(sys, "_MEIPASS"):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("."), relative_path)
+
+# --- Splash Screen Functionality ---
+def show_splash():
+    ctk.set_appearance_mode("light")
+    ctk.set_default_color_theme("green")
+
+    splash = ctk.CTk()
+    splash.overrideredirect(True)
+
+    width, height = 320, 320
+    screen_width = splash.winfo_screenwidth()
+    screen_height = splash.winfo_screenheight()
+    x = (screen_width // 2) - (width // 2)
+    y = (screen_height // 2) - (height // 2)
+    splash.geometry(f"{width}x{height}+{x}+{y}")
+
+    try:
+        pil_image = Image.open(resource_path("KUfacemask.png")).resize((150, 150))
+        logo_image = ctk.CTkImage(light_image=pil_image, size=(150, 150))
+        logo_label = ctk.CTkLabel(splash, image=logo_image, text="")
+        logo_label.pack(pady=(30, 10))
+    except FileNotFoundError:
+        logo_label = ctk.CTkLabel(splash, text="KU\nFaceMask", font=("Arial", 30, "bold"))
+        logo_label.pack(pady=(30, 10))
+
+    loading_label = ctk.CTkLabel(splash, text="Loading KU Face Mask Detector...", font=("Arial", 18))
+    loading_label.pack(pady=(10, 20))
+
+    # Cool loading spinner animation
+    loading_indicator_label = ctk.CTkLabel(splash, text="", font=("Arial", 24))
+    loading_indicator_label.pack(pady=(0, 30))
+    spinner_chars = ["Loading.", "Loading..", "Loading...", "Loading...."]
+
+    def check_ready(spinner_index=0):
+        if os.path.exists("ready.flag"):  # Wait for the ready flag
+            os.remove("ready.flag")  # Clean up
+            splash.destroy()
+        else:
+            loading_indicator_label.configure(text=spinner_chars[spinner_index % len(spinner_chars)])
+            splash.after(200, check_ready, spinner_index + 1)  # Update every 200ms
+
+    splash.after(100, check_ready)
+    splash.mainloop()
+
+# --- Write ready flag for splash screen ---
+with open("ready.flag", "w") as f:
+    f.write("ready")
+
+# --- Set appearance and theme ---
+ctk.set_appearance_mode("light")
+ctk.set_default_color_theme("green")
+
+# --- Show splash screen ---
+show_splash()
+
+# --- Create main app window ---
+main_window = ctk.CTk()
+main_window.title("KU FaceMask")
+main_window.geometry("1200x700")
+main_window.resizable(True, True)
+
+main_window.iconbitmap(resource_path("KUfacemask.ico"))
+
+# --- Configure grid layout ---
+main_window.grid_rowconfigure(0, weight=1)
+main_window.grid_columnconfigure(1, weight=1)
+
+# --- Left panel with logo ---
+left_panel = ctk.CTkFrame(master=main_window, width=200, fg_color="#085F5F")
+left_panel.grid(row=0, column=0, sticky="ns")
+
+logo_image = ctk.CTkImage(Image.open(resource_path("KUfacemask.png")), size=(250, 250))
+logo_label = ctk.CTkLabel(master=left_panel, image=logo_image, text="")
+logo_label.pack(pady=20)
+
+app_name_label = ctk.CTkLabel(
+    master=left_panel,
+    text="Face\nMask\nDetector",
+    font=("Arial", 35, "bold"),
+    text_color="white",
+)
+app_name_label.pack(pady=10)
+
+# --- Main content area ---
+main_area = ctk.CTkFrame(master=main_window, fg_color="#e0e0e0")
+main_area.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
+main_area.grid_rowconfigure(1, weight=1)
+main_area.grid_columnconfigure(0, weight=1)
+
+title_label = ctk.CTkLabel(
+    master=main_area, text="โปรแกรมตรวจสอบใบหน้า", font=("Arial", 24, "bold")
+)
+title_label.grid(row=0, column=0, pady=10)
+
+# --- Display area ---
+display_area = ctk.CTkFrame(master=main_area, fg_color="#e0e0e0", corner_radius=20)
+display_area.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
+display_area.grid_rowconfigure(0, weight=1)
+display_area.grid_columnconfigure(0, weight=1)
 
 # --- Load TFLite model ---
-interpreter = tf.lite.Interpreter(model_path='model_quant.tflite')
+interpreter = tf.lite.Interpreter(model_path=resource_path("model_quant.tflite"))
 interpreter.allocate_tensors()
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
@@ -18,8 +127,7 @@ def tflite_predict(input_img):
     output = np.array(interpreter.get_tensor(output_details[0]['index'])).copy()
     return output
 
-# --- Face detection and preprocessing ---
-import mediapipe as mp
+# --- MediaPipe face detection setup ---
 mp_face = mp.solutions.face_detection
 
 def detect_and_crop_face(image):
@@ -40,28 +148,53 @@ def preprocess_image(image):
     image = cv2.resize(image, (224, 224))  # Model input size
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     image = image / 255.0
-    image = np.expand_dims(image, 0)  # Add batch dim
+    image = np.expand_dims(image, 0)  # Add batch dimension
     return image.astype(np.float32).copy()
 
-# --- Tkinter GUI class ---
-class MaskDetectionApp:
-    def __init__(self, window):
-        self.window = window
-        self.window.title("Face Mask Detection")
-        self.cap = cv2.VideoCapture(0)
+# --- Global state ---
+stop_detection = False
+camera_running = False
+after_id = None
+cap = None
+display_label = None
 
-        self.label = Label(window)
-        self.label.pack()
+class_labels = ["No Mask", "Mask", "No Mask"]
 
-        self.class_labels = ["No Mask", "Mask", "No_Mask."]  # Adjust if needed
+# --- Start detection function ---
+def start_mask_detection():
+    global stop_detection, camera_running, cap, after_id, display_label, display_area
+    if camera_running:
+        return
 
-        self.update_frame()
+    display_area.configure(fg_color="#e0e0e0")
 
-    def update_frame(self):
-        ret, frame = self.cap.read()
+    camera_running = True
+    stop_detection = False
+    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+
+    if display_label:
+        display_label.destroy()
+
+    display_label = ctk.CTkLabel(master=display_area, text="")
+    display_label.grid(row=0, column=0, sticky="nsew")
+
+    ret, frame = cap.read()
+    if ret:
+        height, width = frame.shape[:2]
+        display_area.configure(width=width, height=height)
+
+    def update_frame():
+        global after_id, cap, camera_running, stop_detection, display_label
+        if stop_detection or not cap.isOpened():
+            if cap is not None:
+                cap.release()
+                cap = None
+            camera_running = False
+            return
+
+        ret, frame = cap.read()
         if not ret:
-            print("Failed to grab frame")
-            self.window.after(10, self.update_frame)
+            stop_mask_detection()
             return
 
         face_img, box = detect_and_crop_face(frame)
@@ -71,49 +204,105 @@ class MaskDetectionApp:
             prediction = tflite_predict(input_img)
             prediction = prediction.copy()
 
-            print("Prediction:", prediction)
-
             pred_idx = int(np.argmax(prediction[0]))
             confidence = float(np.max(prediction[0]))
 
-            # Safety check for label index
-            if pred_idx >= len(self.class_labels):
-                label = "Unknown"
-            else:
-                label = self.class_labels[pred_idx]
+            label = "Unknown" if pred_idx >= len(class_labels) else class_labels[pred_idx]
 
-            # Draw bounding box and label
+            # If predicted as "Mask" but confidence is low, show "No Mask"
+            if label == "Mask" and confidence < 0.70:
+                label = "No Mask"
+
             x, y, w, h = box
-            if label == "Mask":
-                color = (0, 255, 0)  # Green
-            else:
-                color = (0, 0, 255)  # Red
+            color = (0, 255, 0) if label == "Mask" else (0, 0, 255)
 
             cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
             text = f"{label}: {confidence:.2f}"
-            cv2.putText(frame, text, (x, y - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
+            cv2.putText(frame, text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
         else:
-            label = "No face detected"
-            cv2.putText(frame, label, (30, 30),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+            cv2.putText(
+                frame,
+                "No face detected",
+                (30, 30),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1,
+                (255, 0, 0),
+                2,
+            )
 
-        # Convert frame for Tkinter
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         img_pil = Image.fromarray(frame_rgb)
-        imgtk = ImageTk.PhotoImage(image=img_pil)
+        ctk_img = ctk.CTkImage(light_image=img_pil, size=(frame.shape[1], frame.shape[0]))
 
-        self.label.imgtk = imgtk
-        self.label.configure(image=imgtk)
+        display_label.configure(image=ctk_img, text="")
+        display_label.ctk_image = ctk_img
+        after_id = display_label.after(10, update_frame)
 
-        self.window.after(10, self.update_frame)
+    update_frame()
 
-    def __del__(self):
-        if self.cap.isOpened():
-            self.cap.release()
+# --- Stop detection function ---
+def stop_mask_detection():
+    global stop_detection, after_id, camera_running, cap, display_label, display_area
+    stop_detection = True
 
-# --- Main ---
-if __name__ == "__main__":
-    root = tk.Tk()
-    app = MaskDetectionApp(root)
-    root.mainloop()
+    if after_id is not None:
+        try:
+            display_label.after_cancel(after_id)
+        except Exception:
+            pass
+        after_id = None
+
+    if cap is not None and cap.isOpened():
+        cap.release()
+        cap = None
+
+    if display_label:
+        display_label.destroy()
+
+    display_label = ctk.CTkLabel(
+        master=display_area,
+        text="CAMERA OFF",
+        font=("Arial", 40, "bold"),
+        text_color="gray",
+    )
+    display_label.grid(row=0, column=0, sticky="nsew")
+
+    display_area.configure(fg_color="#e0e0e0")
+    camera_running = False
+
+# --- Thread wrapper to run detection ---
+def start_detection_thread():
+    threading.Thread(target=start_mask_detection, daemon=True).start()
+
+# --- Initial blank display label ---
+display_label = ctk.CTkLabel(master=display_area, text="")
+display_label.grid(row=0, column=0, sticky="nsew")
+
+# --- Buttons frame ---
+button_frame = ctk.CTkFrame(master=main_area, fg_color="transparent")
+button_frame.grid(row=2, column=0, pady=10)
+
+open_button = ctk.CTkButton(
+    master=button_frame,
+    text="เปิดกล้อง",
+    width=120,
+    height=40,
+    fg_color="green",
+    text_color="white",
+    command=start_detection_thread,
+)
+open_button.grid(row=0, column=0, padx=10)
+
+close_button = ctk.CTkButton(
+    master=button_frame,
+    text="ปิดกล้อง",
+    width=120,
+    height=40,
+    fg_color="darkred",
+    text_color="white",
+    command=stop_mask_detection,
+)
+close_button.grid(row=0, column=1, padx=10)
+
+# --- Run main loop ---
+main_window.mainloop()
