@@ -210,7 +210,7 @@ def start_mask_detection():
             label = "Unknown" if pred_idx >= len(class_labels) else class_labels[pred_idx]
 
             # If predicted as "Mask" but confidence is low, show "No Mask"
-            if label == "Mask" and confidence < 0.70:
+            if label == "Mask" and confidence < 0.97:
                 label = "No Mask"
 
             x, y, w, h = box

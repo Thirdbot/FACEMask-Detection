@@ -9,7 +9,7 @@ a = Analysis(
     ['program2.py'],
     pathex=[],
     binaries=binaries,
-    datas=[('KUfacemask.png', '.'), ('model_quant.tflite', '.')],
+    datas=[('KUfacemask.ico', '.'), ('KUfacemask.png', '.'), ('model_quant.tflite', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
