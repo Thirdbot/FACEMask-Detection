@@ -7,12 +7,19 @@ import threading
 import os
 import mediapipe as mp
 
+# --- Configuration ---
+MODEL_PATH = 'model_quant.tflite'
+FACE_DETECTION_CONFIDENCE = 0.5
+IMG_SIZE = 224
+CLASS_LABELS = ["No Mask", "Mask", "No Mask"]  # Corrected labels!
+
 # --- MediaPipe Setup for Face Detection ---
 mp_face_detection = mp.solutions.face_detection
-face_detection = mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5)
+face_detection = mp_face_detection.FaceDetection(
+    model_selection=0, min_detection_confidence=FACE_DETECTION_CONFIDENCE)
 mp_drawing = mp.solutions.drawing_utils
 
-def detect_face_mediapipe(frame):
+def detect_faces_mediapipe(frame):
     rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     results = face_detection.process(rgb_frame)
     boxes = []
@@ -30,26 +37,23 @@ def crop_face(frame, box):
     return frame[y:y + h, x:x + w]
 
 # --- Mask Detection Logic ---
-def preprocess_image(face_img, target_size=(224, 224)):
+def preprocess_image(face_img, target_size=(IMG_SIZE, IMG_SIZE)):
     if face_img is not None:
         resized_img = cv2.resize(face_img, target_size)
         normalized_img = resized_img / 255.0
-        return np.expand_dims(normalized_img, axis=0)
+        return np.expand_dims(normalized_img, axis=0).astype(np.float32)  # Ensure float32
     return None
 
 # --- Model Loading ---
-model_path = 'model_quant.tflite'  # Ensure this path is correct
-interpreter = tf.lite.Interpreter(model_path=model_path)
+interpreter = tf.lite.Interpreter(model_path=MODEL_PATH)
 interpreter.allocate_tensors()
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
 
 def tflite_predict(input_img):
-    input_img = input_img.astype(np.float32).copy()
     interpreter.set_tensor(input_details[0]['index'], input_img)
     interpreter.invoke()
-    output = np.array(interpreter.get_tensor(output_details[0]['index'])).copy()
-    return output
+    return interpreter.get_tensor(output_details[0]['index'])
 
 # --- GUI Setup ---
 ctk.set_appearance_mode("light")
@@ -132,7 +136,7 @@ def start_mask_detection():
             return
 
         try:
-            face_boxes = detect_face_mediapipe(frame.copy())
+            face_boxes = detect_faces_mediapipe(frame.copy())
             if face_boxes:
                 for box in face_boxes:
                     x, y, w, h = box
@@ -142,23 +146,29 @@ def start_mask_detection():
                         prediction = tflite_predict(input_img)
                         prediction = prediction.copy()
 
-                        class_labels = ["No Mask", "Mask", "No_Mask."]
                         pred_idx = int(np.argmax(prediction[0]))
                         confidence = float(np.max(prediction[0]))
-                        label = class_labels[pred_idx]
+                        label = CLASS_LABELS[pred_idx]
                         color = (0, 255, 0) if label == "Mask" else (0, 0, 255)
 
                         cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
                         display_text = f"{label} ({confidence:.2f})"
                         cv2.putText(frame, display_text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+
+                        # Debugging output
+                        print("Prediction:", prediction)
+                        print("Label:", label)
                     else:
-                        cv2.putText(frame, "No Face for Prediction", (x, y - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+                        cv2.putText(frame, "No Face for Prediction", (x, y - 30),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
             else:
-                cv2.putText(frame, "No Face Detected", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+                cv2.putText(frame, "No Face Detected", (20, 50),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
         except Exception as e:
             print(f"Error processing frame: {e}")
-            cv2.putText(frame, "Detection Error", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+            cv2.putText(frame, "Detection Error", (20, 50),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         img = Image.fromarray(frame)
@@ -188,7 +198,8 @@ def stop_mask_detection():
     if display_label:
         display_label.destroy()
 
-    display_label = ctk.CTkLabel(master=display_area, text="CAMERA OFF", font=("Arial", 40, "bold"), text_color="gray")
+    display_label = ctk.CTkLabel(master=display_area, text="CAMERA OFF",
+                                font=("Arial", 40, "bold"), text_color="gray")
     display_label.grid(row=0, column=0, sticky="nsew")
 
     display_area.configure(fg_color="#e0e0e0")
