@@ -6,6 +6,11 @@ from tensorflow.keras.models import load_model
 import threading
 import tkinter as tk
 import os
+import sys 
+
+# Ensure TensorFlow DLLs are loaded correctly
+if hasattr(sys, "_MEIPASS"):
+    os.environ["PATH"] += os.pathsep + os.path.join(sys._MEIPASS, "tensorflow")
 
 after_id = None
 
