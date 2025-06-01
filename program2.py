@@ -6,68 +6,10 @@ import threading
 import tensorflow as tf
 import mediapipe as mp
 import os
-import sys
-import time
-
-# --- Safe file loading for PyInstaller ---
-def resource_path(relative_path):
-    if hasattr(sys, "_MEIPASS"):
-        return os.path.join(sys._MEIPASS, relative_path)
-    return os.path.join(os.path.abspath("."), relative_path)
-
-# --- Splash Screen Functionality ---
-def show_splash():
-    ctk.set_appearance_mode("light")
-    ctk.set_default_color_theme("green")
-
-    splash = ctk.CTk()
-    splash.overrideredirect(True)
-
-    width, height = 320, 320
-    screen_width = splash.winfo_screenwidth()
-    screen_height = splash.winfo_screenheight()
-    x = (screen_width // 2) - (width // 2)
-    y = (screen_height // 2) - (height // 2)
-    splash.geometry(f"{width}x{height}+{x}+{y}")
-
-    try:
-        pil_image = Image.open(resource_path("KUfacemask.png")).resize((150, 150))
-        logo_image = ctk.CTkImage(light_image=pil_image, size=(150, 150))
-        logo_label = ctk.CTkLabel(splash, image=logo_image, text="")
-        logo_label.pack(pady=(30, 10))
-    except FileNotFoundError:
-        logo_label = ctk.CTkLabel(splash, text="KU\nFaceMask", font=("Arial", 30, "bold"))
-        logo_label.pack(pady=(30, 10))
-
-    loading_label = ctk.CTkLabel(splash, text="Loading KU Face Mask Detector...", font=("Arial", 18))
-    loading_label.pack(pady=(10, 20))
-
-    # Cool loading spinner animation
-    loading_indicator_label = ctk.CTkLabel(splash, text="", font=("Arial", 24))
-    loading_indicator_label.pack(pady=(0, 30))
-    spinner_chars = ["Loading.", "Loading..", "Loading...", "Loading...."]
-
-    def check_ready(spinner_index=0):
-        if os.path.exists("ready.flag"):  # Wait for the ready flag
-            os.remove("ready.flag")  # Clean up
-            splash.destroy()
-        else:
-            loading_indicator_label.configure(text=spinner_chars[spinner_index % len(spinner_chars)])
-            splash.after(200, check_ready, spinner_index + 1)  # Update every 200ms
-
-    splash.after(100, check_ready)
-    splash.mainloop()
-
-# --- Write ready flag for splash screen ---
-with open("ready.flag", "w") as f:
-    f.write("ready")
 
 # --- Set appearance and theme ---
 ctk.set_appearance_mode("light")
 ctk.set_default_color_theme("green")
-
-# --- Show splash screen ---
-show_splash()
 
 # --- Create main app window ---
 main_window = ctk.CTk()
@@ -75,7 +17,7 @@ main_window.title("KU FaceMask")
 main_window.geometry("1200x700")
 main_window.resizable(True, True)
 
-main_window.iconbitmap(resource_path("KUfacemask.ico"))
+main_window.iconbitmap("KUfacemask.ico")
 
 # --- Configure grid layout ---
 main_window.grid_rowconfigure(0, weight=1)
@@ -85,7 +27,7 @@ main_window.grid_columnconfigure(1, weight=1)
 left_panel = ctk.CTkFrame(master=main_window, width=200, fg_color="#085F5F")
 left_panel.grid(row=0, column=0, sticky="ns")
 
-logo_image = ctk.CTkImage(Image.open(resource_path("KUfacemask.png")), size=(250, 250))
+logo_image = ctk.CTkImage(Image.open("KUfacemask.png"), size=(250, 250))
 logo_label = ctk.CTkLabel(master=left_panel, image=logo_image, text="")
 logo_label.pack(pady=20)
 
@@ -115,7 +57,7 @@ display_area.grid_rowconfigure(0, weight=1)
 display_area.grid_columnconfigure(0, weight=1)
 
 # --- Load TFLite model ---
-interpreter = tf.lite.Interpreter(model_path=resource_path("model_quant.tflite"))
+interpreter = tf.lite.Interpreter(model_path="model_quant.tflite")
 interpreter.allocate_tensors()
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
@@ -158,7 +100,7 @@ after_id = None
 cap = None
 display_label = None
 
-class_labels = ["No Mask", "Mask", "No Mask"]
+class_labels = ["No Mask", "Mask", "No_Mask."]  # Adjust if needed
 
 # --- Start detection function ---
 def start_mask_detection():
@@ -209,9 +151,10 @@ def start_mask_detection():
 
             label = "Unknown" if pred_idx >= len(class_labels) else class_labels[pred_idx]
 
-            # If predicted as "Mask" but confidence is low, show "No Mask"
-            if label == "Mask" and confidence < 0.97:
+            # If it's predicted as "Mask" but confidence is low, override it
+            if label == "Mask" and confidence < 0.85:
                 label = "No Mask"
+
 
             x, y, w, h = box
             color = (0, 255, 0) if label == "Mask" else (0, 0, 255)
