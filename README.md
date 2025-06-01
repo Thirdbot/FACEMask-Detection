@@ -40,6 +40,20 @@
    python program.py
    ```
 
+---
+
+## โปรแกรมตรวจจับหน้ากากอนามัย (อีกเวอร์ชัน)
+
+โครงการนี้ยังมีโปรแกรม `program2.py` ซึ่งเป็นอีกเวอร์ชันหนึ่งของการตรวจจับหน้ากากอนามัยแบบเรียลไทม์ โปรแกรมนี้ใช้โมเดลเดียวกันกับที่ใช้งานบนเว็บไซต์ [KU Face Mask Detection](https://ku-face-mask-frontend.vercel.app/).
+
+หากต้องการใช้งานโปรแกรมนี้:
+1. เปิด Terminal หรือ Command Prompt
+2. ไปยังไดเรกทอรีของโปรเจกต์:
+3. รันโปรแกรม:
+   ```
+   python program2.py
+   ```
+
 ## การทำงานของโปรแกรม
 1. **เปิดกล้อง**:
    - คลิกปุ่ม "เปิดกล้อง" เพื่อเริ่มต้นการใช้งานกล้องเว็บแคม
@@ -116,6 +130,18 @@ This project is a real-time face mask detection application built using Python, 
 3. Run the application:
    ```
    python program.py
+   ```
+
+## Face Mask Detection Application (Another Version)
+
+This project also includes a program `program2.py`, which is another version of the real-time face mask detection. This program utilizes the same underlying model as the application found on the [KU Face Mask Detection](https://ku-face-mask-frontend.vercel.app/) website.
+
+To run this program:
+1. Open a terminal or command prompt.
+2. Navigate to the project directory:
+3. Run the program:
+   ```
+   python program2.py
    ```
 
 ## Application Workflow

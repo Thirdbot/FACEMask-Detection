@@ -2,9 +2,9 @@ import customtkinter as ctk
 from PIL import Image, ImageTk
 import cv2
 import numpy as np
-from tensorflow.keras.models import load_model  
+from tensorflow.keras.models import load_model
 import threading
-import tkinter as tk  
+import tkinter as tk
 import os
 
 after_id = None
@@ -52,17 +52,22 @@ display_area.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
 display_area.grid_rowconfigure(0, weight=1) # Ensure content inside can expand
 display_area.grid_columnconfigure(0, weight=1)
 
-# Load model and face detection
-model = load_model("face_mask_detector.h5")
-face_net = cv2.dnn.readNetFromCaffe("deploy.prototxt", "res10_300x300_ssd_iter_140000.caffemodel")
-IMG_SIZE = 224
-
 # Global state variables
 stop_detection = False
 camera_running = False
 after_id = None
-cap = None  # Global video capture object
-display_label = None # Initialize display_label here
+cap = None
+display_label = None
+model = None  # Lazy load the model
+face_net = None  # Lazy load the face detection model
+
+# Function to load the model and face detection network lazily
+def lazy_load_models():
+    global model, face_net
+    if model is None:
+        model = load_model("face_mask_detector.h5")
+    if face_net is None:
+        face_net = cv2.dnn.readNetFromCaffe("deploy.prototxt", "res10_300x300_ssd_iter_140000.caffemodel")
 
 # Function to start detection
 def start_mask_detection():
@@ -70,20 +75,23 @@ def start_mask_detection():
     if camera_running:
         return
 
+    # Lazy load the models
+    lazy_load_models()
+
     # Change display_area background to active camera color
     display_area.configure(fg_color="#e0e0e0")
 
     camera_running = True
     stop_detection = False
-    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 
-    # Destroy the "Camera closed" label if it exists
+    # Show "Please wait" message
     if display_label:
         display_label.destroy()
+    display_label = ctk.CTkLabel(master=display_area, text="Please wait...\nLoading camera...", font=("Arial", 24, "bold"), text_color="gray")
+    display_label.grid(row=0, column=0, sticky="nsew")
 
-    # Recreate display_label for camera feed
-    display_label = ctk.CTkLabel(master=display_area, text="")
-    display_label.grid(row=0, column=0, sticky="nsew") # Use grid for better size control
+    # Initialize the camera
+    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 
     # Set display area size from camera feed
     ret, frame = cap.read()
@@ -105,6 +113,12 @@ def start_mask_detection():
             stop_mask_detection()
             return
 
+        # Replace "Please wait" message with the camera feed
+        if display_label.cget("text") == "Please wait...\nLoading camera...":
+            display_label.destroy()
+            display_label = ctk.CTkLabel(master=display_area, text="")
+            display_label.grid(row=0, column=0, sticky="nsew")
+
         (h, w) = frame.shape[:2]
         blob = cv2.dnn.blobFromImage(frame, 1.0, (300, 300), (104.0, 177.0, 123.0))
         face_net.setInput(blob)
@@ -124,7 +138,7 @@ def start_mask_detection():
             if face_img.size == 0:
                 continue
 
-            face_resized = cv2.resize(face_img, (IMG_SIZE, IMG_SIZE))
+            face_resized = cv2.resize(face_img, (224, 224))
             face_resized = face_resized / 255.0
             face_input = np.expand_dims(face_resized, axis=0)
 
