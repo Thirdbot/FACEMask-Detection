@@ -46,13 +46,13 @@
 
 โครงการนี้ยังมีโปรแกรม `program2.py` ซึ่งเป็นอีกเวอร์ชันหนึ่งของการตรวจจับหน้ากากอนามัยแบบเรียลไทม์ โปรแกรมนี้ใช้โมเดลเดียวกันกับที่ใช้งานบนเว็บไซต์ [KU Face Mask Detection](https://ku-face-mask-frontend.vercel.app/).
 
+**หมายเหตุเกี่ยวกับการสร้างไฟล์ EXE:** เนื่องจากข้อจำกัดในการใช้งาน `tflite-runtime` บน Windows (ซึ่งมักจะต้องมีการติดตั้งและตั้งค่าที่ซับซ้อน โดยเฉพาะอย่างยิ่งเมื่อต้องการแปลงเป็นไฟล์ executable ที่ทำงานได้โดยไม่ต้องมีสภาพแวดล้อม Python), การสร้างไฟล์ `.exe` สำหรับ `program2.py` โดยตรงอาจทำได้ยากในขณะนี้ การใช้งาน `tflite-runtime` บน Linux มักจะสะดวกกว่า แต่ต้องอาศัยความรู้และเครื่องมือเพิ่มเติม เช่น Linux หรือ Docker ซึ่งอาจต้องใช้เวลาในการเรียนรู้
+
 หากต้องการใช้งานโปรแกรมนี้:
 1. เปิด Terminal หรือ Command Prompt
 2. ไปยังไดเรกทอรีของโปรเจกต์:
 3. รันโปรแกรม:
-   ```
-   python program2.py
-   ```
+python program2.py
 
 ## การทำงานของโปรแกรม
 1. **เปิดกล้อง**:
@@ -132,17 +132,19 @@ This project is a real-time face mask detection application built using Python, 
    python program.py
    ```
 
+---
+
 ## Face Mask Detection Application (Another Version)
 
 This project also includes a program `program2.py`, which is another version of the real-time face mask detection. This program utilizes the same underlying model as the application found on the [KU Face Mask Detection](https://ku-face-mask-frontend.vercel.app/) website.
+
+**Note on Creating an EXE File:** Due to limitations with using `tflite-runtime` on Windows (which often requires complex installation and configuration, especially when converting to a standalone executable), directly creating a `.exe` file for `program2.py` might be challenging at the moment. Utilizing `tflite-runtime` on Linux is generally more straightforward but requires additional knowledge and tools like Linux or Docker, which may involve a learning curve.
 
 To run this program:
 1. Open a terminal or command prompt.
 2. Navigate to the project directory:
 3. Run the program:
-   ```
-   python program2.py
-   ```
+python program2.py
 
 ## Application Workflow
 1. **Open Camera**:
