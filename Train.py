@@ -92,8 +92,14 @@ class Trainer:
     def create_model(self, model_name, config=None):
         #select model from lib and model_name
         model_func = self.model_loader.select(model_name)
+        random_time = time.strftime("%Y%m%d_%H%M%S", time.localtime())
         #call model instance and pass config as create model
-        self.model = self.model_loader.create_model(model_func, config)
+        self.log_model.create_project_model(
+                    project_name=self.model_project_name,
+                    model_name=f"{model_name}_sweep_{random_time}",
+                    model_path=None
+                )
+        self.model = self.model_loader.create_model(model_func, self.log_model.model_config)
         
     
     def train_all(self):

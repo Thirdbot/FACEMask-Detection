@@ -64,8 +64,8 @@ class LogModel:
                 },
                 "KNNClass": {
                     "parameters": {
-                        "n_neighbors": {"values": [3,5,7,10,20]},
-                        "leaf_size": {"values": [30,40,50,100]},
+                        "n_neighbors": {"values": [3,5,7,10,]},
+                        "leaf_size": {"values": [30]},
                         "p": {"values": [1,2,3,5]},
                         "metric": {"values": ["minkowski","euclidean"]},
                         "weights": {"values": ["uniform","distance"]}

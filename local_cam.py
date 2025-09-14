@@ -9,7 +9,7 @@ tf.get_logger().setLevel('ERROR')
 
 
 Home_dir = Path(__file__).parent.absolute()
-model_path = Home_dir / "backend"  / "models" / "RFC.h5"
+model_path = Home_dir / "backend"  / "models" / "DeepLearning.h5"
 
 
 

@@ -10,10 +10,10 @@ def run_train():
     trainer = Trainer(path=dataset_path)
     
     #กำหนดอบเทรน config (sweep model)
-    trainer.runtime = 3
+    trainer.runtime = 1
 
     ###model list  ["DeepLearning","DecisionClass","KNNClass","RFC"]
-    model_name = "DeepLearning"
+    model_name = "DecisionClass"
 
     #เทรนโมเดล 1 ตัว ให้สร้างโมเดลเเละเทรน
     trainer.create_model(model_name)
